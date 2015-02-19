@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<title>sorttable example</title>
+<script src="../sorttable.js"></script>
+<style>
+table{
+	border:2px solid #666;
+}
+table td{
+	border:1px dotted #666;
+}
+table th{
+	cursor:pointer;
+}
+table tr:hover{
+	background:#eee;
+}
+</style>
+</head>
+<body>
+<hr/>
+<h4>Simple example taken from <a href="http://kryogenix.org/code/browser/sorttable/">kryogenix.org</a> <small>(note that the "American" example isn't complete)</small>:</h4>
+
+<!-- sortable table -->
+
+<table class="sortable">
+	<tr>
+		<th>Name</th><th>Salary</th>
+		<th>Extension</th><th>Start date</th><th>Start date (American)</th>
+	</tr>
+	<tr><td>Bloggs, Fred</td><td>$12000.00</td>
+		<td>1353</td><td>18/08/2003</td><td>08/18/2003</td></tr>
+	<tr><td>Turvey, Kevin</td><td>$191200.00</td>
+		<td>2342</td><td>02/05/1979</td><td>05/02/1979</td></tr>
+	<tr><td>Mbogo, Arnold</td><td>$32010.12</td>
+		<td>2755</td><td>09/08/1998</td><td>08/09/1998</td></tr>
+	<tr><td>Shakespeare, Bill</td><td>$122000.00</td>
+		<td>3211</td><td>12/11/1961</td><td>11/12/1961</td></tr>
+	<tr><td>Shakespeare, Hamnet</td><td>$9000</td>
+		<td>9005</td><td>01/01/2002</td><td>01/01/2002</td></tr>
+	<tr><td>Fitz, Marvin</td><td>$3300</td>
+		<td>5554</td><td>22/05/1995</td><td>05/22/1995</td></tr>
+</table>
+
+<!-- that's it -->
+
+<hr/>
+<h4>The following one requires some help to be properly sortable:</h4>
+<table class="sortable">
+<thead>
+	<tr><th>Duration</th></tr>
+</thead>
+<tbody>
+	<tr><td>23 d 12 h 36 m</td></tr>
+	<tr><td>12 d 05 h 00 m</td></tr>
+	<tr><td>7 d 22 h 44 m</td></tr>
+	<tr><td>7 d 17 h 56 m</td></tr>
+	<tr><td>6 d 21 h 40 m</td></tr>
+	<tr><td>2 d 23 h 48 m</td></tr>
+	<tr><td>1 d 14 h 00 m</td></tr>
+	<tr><td>0 d 15 h 40 m</td></tr>
+	<tr><td>115 d 08 h 56 m</td></tr>
+</tbody>
+</table>
+<br/>
+So lets use "data-st-key" to provide a custom key (timestamp in this case) to make it sortable<br/><br/>
+
+<!-- custom sortable table -->
+
+<table class="sortable">
+<thead>
+	<tr><th id="thdur">Duration</th></tr>
+</thead>
+<tbody>
+	<tr><td data-st-key="2032561">23 d 12 h 36 m</td></tr>
+	<tr><td data-st-key="1054801">12 d 05 h 00 m</td></tr>
+	<tr><td data-st-key="686641">7 d 22 h 44 m</td></tr>
+	<tr><td data-st-key="669361">7 d 17 h 56 m</td></tr>
+	<tr><td data-st-key="596401">6 d 21 h 40 m</td></tr>
+	<tr><td data-st-key="258481">2 d 23 h 48 m</td></tr>
+	<tr><td data-st-key="136801">1 d 14 h 00 m</td></tr>
+	<tr><td data-st-key="56401">0 d 15 h 40 m</td></tr>
+	<tr><td data-st-key="9968161">115 d 08 h 56 m</td></tr>
+</tbody>
+</table>
+
+<!-- and a simple button to demonstrate script triggered sort -->
+
+<br/><br/>
+<button onclick="sorttable.innerSortFunction.apply(document.getElementById('thdur'),[]);">script triggered sort example on above table</button>
+
+<!-- that's it -->
+
+<hr/>
+<h4>...</h4>
+</body>
+</html>

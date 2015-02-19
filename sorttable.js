@@ -50,28 +50,6 @@ sorttable = {
 
 		if (table.tHead.rows.length != 1) return; // can't cope with two header rows
 
-		// Sorttable v1 put rows with a class of "sortbottom" at the bottom (as
-		// "total" rows, for example). This is B&R, since what you're supposed
-		// to do is put them in a tfoot. So, if there are sortbottom rows,
-		// for backwards compatibility, move them to tfoot (creating it if needed).
-		sortbottomrows = [];
-		for (var i=0; i<table.rows.length; i++) {
-			if (table.rows[i].className.search(/\bsortbottom\b/) != -1) {
-				sortbottomrows[sortbottomrows.length] = table.rows[i];
-			}
-		}
-		if (sortbottomrows) {
-			if (table.tFoot == null) {
-				// table doesn't have a tfoot. Create one.
-				tfo = document.createElement('tfoot');
-				table.appendChild(tfo);
-			}
-			for (var i=0; i<sortbottomrows.length; i++) {
-				tfo.appendChild(sortbottomrows[i]);
-			}
-			delete sortbottomrows;
-		}
-
 		// work through each column and calculate its type
 		headrow = table.tHead.rows[0].cells;
 		for (var i=0; i<headrow.length; i++) {
@@ -157,8 +135,6 @@ sorttable = {
 					for (var j=0; j<row_array.length; j++) {
 						tb.appendChild(row_array[j][1]);
 					}
-
-					delete row_array;
 				});
 			}
 		}
@@ -249,7 +225,6 @@ sorttable = {
 		for (var i=newrows.length-1; i>=0; i--) {
 			tbody.appendChild(newrows[i]);
 		}
-		delete newrows;
 	},
 
 	/* sort functions

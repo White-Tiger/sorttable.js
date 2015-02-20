@@ -52,7 +52,7 @@ var sorttable = {
 
 		// work through each column and calculate its type
 		var headrow = table.tHead.rows[0].cells;
-		for (var i=0; i<headrow.length; i++) {
+		for (var i=0; i<headrow.length; ++i) {
 			// manually override the type with a sorttable_type attribute
 			if (!headrow[i].className.match(/\bsorttable_nosort\b/)) { // skip this col
 				var mtch = headrow[i].className.match(/\bsorttable_([a-z0-9]+)\b/);
@@ -107,7 +107,7 @@ var sorttable = {
 					var row_array = [];
 					var col = this.sorttable_columnindex;
 					var rows = this.sorttable_tbody.rows;
-					for (var j=0; j<rows.length; j++) {
+					for (var j=0; j<rows.length; ++j) {
 						row_array[row_array.length] = [sorttable.getInnerText(rows[j].cells[col]), rows[j]];
 					}
 					/* If you want a stable sort, uncomment the following line */
@@ -116,7 +116,7 @@ var sorttable = {
 					row_array.sort(this.sorttable_sortfunction);
 
 					var tb = this.sorttable_tbody;
-					for (var j=0; j<row_array.length; j++) {
+					for (var j=0; j<row_array.length; ++j) {
 						tb.appendChild(row_array[j][1]);
 					}
 				});
@@ -127,7 +127,7 @@ var sorttable = {
 	guessType: function(table, column) {
 		// guess the type of a column based on its first non-blank row
 		var sortfn = sorttable.sort_alpha;
-		for (var i=0; i<table.tBodies[0].rows.length; i++) {
+		for (var i=0; i<table.tBodies[0].rows.length; ++i) {
 			var text = sorttable.getInnerText(table.tBodies[0].rows[i].cells[column]);
 			if (text != '') {
 				if (text.match(/^-?[£$¤]?[\d,.]+%?$/)) {
@@ -189,7 +189,7 @@ var sorttable = {
 			case 1:
 			case 11:
 				var innerText = '';
-				for (var i = 0; i < node.childNodes.length; i++) {
+				for (var i = 0; i < node.childNodes.length; ++i) {
 					innerText += sorttable.getInnerText(node.childNodes[i]);
 				}
 				return innerText.replace(/^\s+|\s+$/g, '');
@@ -202,10 +202,10 @@ var sorttable = {
 	reverse: function(tbody) {
 		// reverse the rows in a tbody
 		var newrows = [];
-		for (var i=0; i<tbody.rows.length; i++) {
+		for (var i=0; i<tbody.rows.length; ++i) {
 			newrows[newrows.length] = tbody.rows[i];
 		}
-		for (var i=newrows.length-1; i>=0; i--) {
+		for (var i=newrows.length-1; i>=0; --i) {
 			tbody.appendChild(newrows[i]);
 		}
 	},
@@ -274,7 +274,7 @@ var sorttable = {
 					swap = true;
 				}
 			} // for
-			t--;
+			--t;
 
 			if (!swap) break;
 
@@ -286,7 +286,7 @@ var sorttable = {
 					swap = true;
 				}
 			} // for
-			b++;
+			++b;
 
 		} // while(swap)
 	}
@@ -408,7 +408,7 @@ fixEvent.stopPropagation = function() {
 // array-like enumeration
 if (!Array.forEach) { // mozilla already supports this
 	Array.forEach = function(array, block, context) {
-		for (var i = 0; i < array.length; i++) {
+		for (var i = 0; i < array.length; ++i) {
 			block.call(context, array[i], i, array);
 		}
 	};

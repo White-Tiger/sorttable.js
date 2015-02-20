@@ -1,6 +1,6 @@
 /*
   SortTable
-  version 2e1 (enhanced)
+  version 2e2 (enhanced)
   7th April 2007 (20th February 2015)
   Stuart Langridge, http://www.kryogenix.org/code/browser/sorttable/
 
@@ -65,31 +65,23 @@ var sorttable = {
 				headrow[i].sorttable_columnindex = i;
 				headrow[i].sorttable_tbody = table.tBodies[0];
 				dean_addEvent(headrow[i], "click", sorttable.innerSortFunction = function(e) {
-
+					var arrow=this.parentNode.stArrow;
 					if (this.className.search(/\bsorttable_sorted\b/) != -1) {
 						// if we're already sorted by this column, just
 						// reverse the table, which is quicker
 						sorttable.reverse(this.sorttable_tbody);
-						this.className = this.className.replace('sorttable_sorted',
-							'sorttable_sorted_reverse');
-						this.removeChild(document.getElementById('sorttable_sortfwdind'));
-						var sortrevind = document.createElement('span');
-						sortrevind.id = "sorttable_sortrevind";
-						sortrevind.innerHTML = stIsIE ? '&nbsp<font face="webdings">5</font>' : '&nbsp;&#x25B4;';
-						this.appendChild(sortrevind);
+						this.className = this.className.replace('sorttable_sorted', 'sorttable_sorted_reverse');
+						arrow.className = 'sorttable_sortrevind';
+						arrow.innerHTML = stIsIE ? '&nbsp<font face="webdings">5</font>' : '&nbsp;&#x25B4;';
 						return;
 					}
 					if (this.className.search(/\bsorttable_sorted_reverse\b/) != -1) {
 						// if we're already sorted by this column in reverse, just
 						// re-reverse the table, which is quicker
 						sorttable.reverse(this.sorttable_tbody);
-						this.className = this.className.replace('sorttable_sorted_reverse',
-							'sorttable_sorted');
-						this.removeChild(document.getElementById('sorttable_sortrevind'));
-						var sortfwdind = document.createElement('span');
-						sortfwdind.id = "sorttable_sortfwdind";
-						sortfwdind.innerHTML = stIsIE ? '&nbsp<font face="webdings">6</font>' : '&nbsp;&#x25BE;';
-						this.appendChild(sortfwdind);
+						this.className = this.className.replace('sorttable_sorted_reverse', 'sorttable_sorted');
+						arrow.className = 'sorttable_sortfwdind';
+						arrow.innerHTML = stIsIE ? '&nbsp<font face="webdings">6</font>' : '&nbsp;&#x25BE;';
 						return;
 					}
 
@@ -101,18 +93,12 @@ var sorttable = {
 							cell.className = cell.className.replace('sorttable_sorted', '');
 						}
 					});
-					var sortfwdind = document.getElementById('sorttable_sortfwdind');
-					if (sortfwdind)
-						sortfwdind.parentNode.removeChild(sortfwdind);
-					var sortrevind = document.getElementById('sorttable_sortrevind');
-					if (sortrevind)
-						sortrevind.parentNode.removeChild(sortrevind);
-
 					this.className += ' sorttable_sorted';
-					sortfwdind = document.createElement('span');
-					sortfwdind.id = "sorttable_sortfwdind";
-					sortfwdind.innerHTML = stIsIE ? '&nbsp<font face="webdings">6</font>' : '&nbsp;&#x25BE;';
-					this.appendChild(sortfwdind);
+					if(arrow) arrow.parentNode.removeChild(arrow);
+					arrow = document.createElement('span');
+					arrow.className = 'sorttable_sortfwdind';
+					arrow.innerHTML = stIsIE ? '&nbsp<font face="webdings">6</font>' : '&nbsp;&#x25BE;';
+					this.parentNode.stArrow=this.appendChild(arrow);
 
 					// build an array to sort. This is a Schwartzian transform thing,
 					// i.e., we "decorate" each row with the actual sort key,

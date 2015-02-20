@@ -6,7 +6,8 @@ sorttable allows HTML tables to be sorted by Javascript when clicked on a column
 
 #### documentation
 refer to [original site](http://kryogenix.org/code/browser/sorttable/) for full documentation and examples. <br>
-**Note: the custom sort attribute "sorttable_customkey" got replaced by "data-st-key" to be HTML5 conform.**
+**Note: the custom sort attribute "sorttable_customkey" got replaced by "data-st-key" to be HTML5 conform.** <br>
+For simple examples, see [my example](https://cdn.rawgit.com/White-Tiger/sorttable.js/master/docs/example.html) page.
 
 
 #### changes compared to original sorttable

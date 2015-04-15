@@ -17,24 +17,23 @@
 var stIsIE = /*@cc_on!@*/ false;
 
 var sorttable = {
+	DATE_RE: /^(\d\d?)[\/\.-](\d\d?)[\/\.-]((\d\d)?\d\d)$/,
+	_isi: false,
+	_timer: null,
 	init: function() {
 		// quit if this function has already been called
-		if (arguments.callee.done) return;
-		// flag this function so we don't do the same thing twice
-		arguments.callee.done = true;
-		// kill the timer
-		if (_timer) clearInterval(_timer);
+		if (sorttable._isi) return;
+		sorttable._isi = true;
+		// kill the init timer for Safari
+		if (sorttable._timer) clearInterval(sorttable._timer);
 
 		if (!document.createElement || !document.getElementsByTagName) return;
-
-		sorttable.DATE_RE = /^(\d\d?)[\/\.-](\d\d?)[\/\.-]((\d\d)?\d\d)$/;
 
 		forEach(document.getElementsByTagName('table'), function(table) {
 			if (table.className.search(/\bsortable\b/) != -1) {
 				sorttable.makeSortable(table);
 			}
 		});
-
 	},
 
 	makeSortable: function(table) {
@@ -64,62 +63,7 @@ var sorttable = {
 				// make it clickable to sort
 				headrow[i].sorttable_columnindex = i;
 				headrow[i].sorttable_tbody = table.tBodies[0];
-				dean_addEvent(headrow[i], "click", sorttable.innerSortFunction = function(e) {
-					var arrow=this.parentNode.stArrow;
-					if (this.className.search(/\bsorttable_sorted\b/) != -1) {
-						// if we're already sorted by this column, just
-						// reverse the table, which is quicker
-						sorttable.reverse(this.sorttable_tbody);
-						this.className = this.className.replace('sorttable_sorted', 'sorttable_sorted_reverse');
-						arrow.className = 'sorttable_sortrevind';
-						arrow.innerHTML = stIsIE ? '&nbsp<font face="webdings">5</font>' : '&nbsp;&#x25B4;';
-						return;
-					}
-					if (this.className.search(/\bsorttable_sorted_reverse\b/) != -1) {
-						// if we're already sorted by this column in reverse, just
-						// re-reverse the table, which is quicker
-						sorttable.reverse(this.sorttable_tbody);
-						this.className = this.className.replace('sorttable_sorted_reverse', 'sorttable_sorted');
-						arrow.className = 'sorttable_sortfwdind';
-						arrow.innerHTML = stIsIE ? '&nbsp<font face="webdings">6</font>' : '&nbsp;&#x25BE;';
-						return;
-					}
-
-					// remove sorttable_sorted classes
-					var theadrow = this.parentNode;
-					forEach(theadrow.childNodes, function(cell) {
-						if (cell.nodeType == 1) { // an element
-							cell.className = cell.className.replace('sorttable_sorted_reverse', '');
-							cell.className = cell.className.replace('sorttable_sorted', '');
-						}
-					});
-					this.className += ' sorttable_sorted';
-					if(arrow) arrow.parentNode.removeChild(arrow);
-					arrow = document.createElement('span');
-					arrow.className = 'sorttable_sortfwdind';
-					arrow.innerHTML = stIsIE ? '&nbsp<font face="webdings">6</font>' : '&nbsp;&#x25BE;';
-					this.parentNode.stArrow=this.appendChild(arrow);
-
-					// build an array to sort. This is a Schwartzian transform thing,
-					// i.e., we "decorate" each row with the actual sort key,
-					// sort based on the sort keys, and then put the rows back in order
-					// which is a lot faster because you only do getInnerText once per row
-					var row_array = [];
-					var col = this.sorttable_columnindex;
-					var rows = this.sorttable_tbody.rows;
-					for (var j=0; j<rows.length; ++j) {
-						row_array[row_array.length] = [sorttable.getInnerText(rows[j].cells[col]), rows[j]];
-					}
-					/* If you want a stable sort, uncomment the following line */
-					//sorttable.shaker_sort(row_array, this.sorttable_sortfunction);
-					/* and comment out this one */
-					row_array.sort(this.sorttable_sortfunction);
-
-					var tb = this.sorttable_tbody;
-					for (var j=0; j<row_array.length; ++j) {
-						tb.appendChild(row_array[j][1]);
-					}
-				});
+				dean_addEvent(headrow[i], "click", sorttable.innerSortFunction);
 			}
 		}
 	},
@@ -207,6 +151,63 @@ var sorttable = {
 		}
 		for (var i=newrows.length-1; i>=0; --i) {
 			tbody.appendChild(newrows[i]);
+		}
+	},
+
+	innerSortFunction: function(e) {
+		var arrow=this.parentNode.stArrow;
+		if (this.className.search(/\bsorttable_sorted\b/) != -1) {
+			// if we're already sorted by this column, just
+			// reverse the table, which is quicker
+			sorttable.reverse(this.sorttable_tbody);
+			this.className = this.className.replace('sorttable_sorted', 'sorttable_sorted_reverse');
+			arrow.className = 'sorttable_sortrevind';
+			arrow.innerHTML = stIsIE ? '&nbsp<font face="webdings">5</font>' : '&nbsp;&#x25B4;';
+			return;
+		}
+		if (this.className.search(/\bsorttable_sorted_reverse\b/) != -1) {
+			// if we're already sorted by this column in reverse, just
+			// re-reverse the table, which is quicker
+			sorttable.reverse(this.sorttable_tbody);
+			this.className = this.className.replace('sorttable_sorted_reverse', 'sorttable_sorted');
+			arrow.className = 'sorttable_sortfwdind';
+			arrow.innerHTML = stIsIE ? '&nbsp<font face="webdings">6</font>' : '&nbsp;&#x25BE;';
+			return;
+		}
+
+		// remove sorttable_sorted classes
+		var theadrow = this.parentNode;
+		forEach(theadrow.childNodes, function(cell) {
+			if (cell.nodeType == 1) { // an element
+				cell.className = cell.className.replace('sorttable_sorted_reverse', '');
+				cell.className = cell.className.replace('sorttable_sorted', '');
+			}
+		});
+		this.className += ' sorttable_sorted';
+		if(arrow) arrow.parentNode.removeChild(arrow);
+		arrow = document.createElement('span');
+		arrow.className = 'sorttable_sortfwdind';
+		arrow.innerHTML = stIsIE ? '&nbsp<font face="webdings">6</font>' : '&nbsp;&#x25BE;';
+		this.parentNode.stArrow=this.appendChild(arrow);
+
+		// build an array to sort. This is a Schwartzian transform thing,
+		// i.e., we "decorate" each row with the actual sort key,
+		// sort based on the sort keys, and then put the rows back in order
+		// which is a lot faster because you only do getInnerText once per row
+		var row_array = [];
+		var col = this.sorttable_columnindex;
+		var rows = this.sorttable_tbody.rows;
+		for (var j=0; j<rows.length; ++j) {
+			row_array[row_array.length] = [sorttable.getInnerText(rows[j].cells[col]), rows[j]];
+		}
+		/* If you want a stable sort, uncomment the following line */
+		//sorttable.shaker_sort(row_array, this.sorttable_sortfunction);
+		/* and comment out this one */
+		row_array.sort(this.sorttable_sortfunction);
+
+		var tb = this.sorttable_tbody;
+		for (var j=0; j<row_array.length; ++j) {
+			tb.appendChild(row_array[j][1]);
 		}
 	},
 
@@ -317,7 +318,7 @@ if (document.addEventListener) {
 
 /* for Safari */
 if (/WebKit/i.test(navigator.userAgent)) { // sniff
-	var _timer = setInterval(function() {
+	sorttable._timer = setInterval(function() {
 		if (/loaded|complete/.test(document.readyState)) {
 			sorttable.init(); // call the onload handler
 		}

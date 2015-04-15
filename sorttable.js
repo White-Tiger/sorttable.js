@@ -18,6 +18,9 @@ var stIsIE = /*@cc_on!@*/ false;
 
 var sorttable = {
 	DATE_RE: /^(\d\d?)[\/\.-](\d\d?)[\/\.-]((\d\d)?\d\d)$/,
+	CLASS_SORT: ['sorttable_sorted','sorttable_sorted_reverse'],
+	CLASS_ARROW: ['sorttable_sortfwdind','sorttable_sortrevind'],
+	ARROWS: stIsIE ? ['&nbsp<font face="webdings">6</font>','&nbsp<font face="webdings">5</font>'] : ['&nbsp;&#x25BE;','&nbsp;&#x25B4;'],
 	_isi: false,
 	_timer: null,
 	init: function() {
@@ -154,41 +157,34 @@ var sorttable = {
 		}
 	},
 
-	innerSortFunction: function(e) {
-		var arrow=this.parentNode.stArrow;
-		if (this.className.search(/\bsorttable_sorted\b/) != -1) {
-			// if we're already sorted by this column, just
-			// reverse the table, which is quicker
-			sorttable.reverse(this.sorttable_tbody);
-			this.className = this.className.replace('sorttable_sorted', 'sorttable_sorted_reverse');
-			arrow.className = 'sorttable_sortrevind';
-			arrow.innerHTML = stIsIE ? '&nbsp<font face="webdings">5</font>' : '&nbsp;&#x25B4;';
-			return;
-		}
-		if (this.className.search(/\bsorttable_sorted_reverse\b/) != -1) {
-			// if we're already sorted by this column in reverse, just
-			// re-reverse the table, which is quicker
-			sorttable.reverse(this.sorttable_tbody);
-			this.className = this.className.replace('sorttable_sorted_reverse', 'sorttable_sorted');
-			arrow.className = 'sorttable_sortfwdind';
-			arrow.innerHTML = stIsIE ? '&nbsp<font face="webdings">6</font>' : '&nbsp;&#x25BE;';
-			return;
-		}
-
-		// remove sorttable_sorted classes
-		var theadrow = this.parentNode;
-		forEach(theadrow.childNodes, function(cell) {
-			if (cell.nodeType == 1) { // an element
-				cell.className = cell.className.replace('sorttable_sorted_reverse', '');
-				cell.className = cell.className.replace('sorttable_sorted', '');
+	updateArrow: function(th,inverse,create) {
+		var arrow = th.parentNode.stArrow;
+		if (create){
+			if (arrow){
+				var preth = arrow.parentNode;
+				preth.removeChild(arrow);
+				// remove sorttable_sorted classes
+				preth.className = preth.className
+					.replace(new RegExp('\\s*\\b'+sorttable.CLASS_SORT[0]+'\\b\\s*'),'')
+					.replace(new RegExp('\\s*\\b'+sorttable.CLASS_SORT[1]+'\\b\\s*'),'');
 			}
-		});
-		this.className += ' sorttable_sorted';
-		if(arrow) arrow.parentNode.removeChild(arrow);
-		arrow = document.createElement('span');
-		arrow.className = 'sorttable_sortfwdind';
-		arrow.innerHTML = stIsIE ? '&nbsp<font face="webdings">6</font>' : '&nbsp;&#x25BE;';
-		this.parentNode.stArrow=this.appendChild(arrow);
+			arrow = document.createElement('span');
+			th.className += ' '+sorttable.CLASS_SORT[inverse];
+			th.parentNode.stArrow = th.appendChild(arrow);
+		} else // toggle class
+			th.className = th.className.replace(new RegExp('\\b'+sorttable.CLASS_SORT[(1+inverse)%2]+'\\b'), sorttable.CLASS_SORT[inverse]);
+		arrow.className = sorttable.CLASS_ARROW[inverse];
+		arrow.innerHTML = sorttable.ARROWS[inverse];
+	},
+
+	innerSortFunction: function(e) {
+		if (this.className.indexOf(sorttable.CLASS_SORT[0]) != -1) {
+			var inverse = (this.className.indexOf(sorttable.CLASS_SORT[1])==-1) ? 1 : 0;
+			sorttable.updateArrow(this,inverse,0);
+			sorttable.reverse(this.sorttable_tbody);
+			return;
+		}
+		sorttable.updateArrow(this,0,1);
 
 		// build an array to sort. This is a Schwartzian transform thing,
 		// i.e., we "decorate" each row with the actual sort key,

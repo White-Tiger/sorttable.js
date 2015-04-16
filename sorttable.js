@@ -57,15 +57,8 @@ var sorttable = {
 		for (var i=0; i<headrow.length; ++i) {
 			// manually override the type with a sorttable_type attribute
 			if (!headrow[i].className.match(/\bsorttable_nosort\b/)) { // skip this col
-				var mtch = headrow[i].className.match(/\bsorttable_([a-z0-9]+)\b/);
-				if (mtch && typeof sorttable["sort_"+mtch[1]] == 'function') {
-					headrow[i].sorttable_sortfunction = sorttable["sort_"+mtch[1]];
-				} else {
-					headrow[i].sorttable_sortfunction = sorttable.guessType(table,i);
-				}
-				// make it clickable to sort
-				headrow[i].sorttable_columnindex = i;
-				headrow[i].sorttable_tbody = table.tBodies[0];
+				headrow[i].sorttable_rows = -1;
+				headrow[i].sorttable_col = i;
 				dean_addEvent(headrow[i], "click", sorttable.innerSortFunction);
 			}
 		}
@@ -178,21 +171,31 @@ var sorttable = {
 	},
 
 	innerSortFunction: function(e) {
-		if (this.className.indexOf(sorttable.CLASS_SORT[0]) != -1) {
-			var inverse = (this.className.indexOf(sorttable.CLASS_SORT[1])==-1) ? 1 : 0;
-			sorttable.updateArrow(this,inverse,0);
-			sorttable.reverse(this.sorttable_tbody);
+		var sorted = (this.className.indexOf(sorttable.CLASS_SORT[0]) != -1);
+		var inverse = (sorted && this.className.indexOf(sorttable.CLASS_SORT[1])==-1) ? 1 : 0;
+		var table = this.parentNode.parentNode.parentNode;
+		var rows = table.tBodies[0].rows;
+		var col = this.sorttable_col;
+
+		sorttable.updateArrow(this,inverse,!sorted);
+		if (rows.length !== this.sorttable_rows){
+			this.sorttable_rows = rows.length;
+			var mtch = this.className.match(/\bsorttable_([a-z0-9]+)\b/);
+			if (mtch && sorttable['sort_'+mtch[1]]) {
+				this.sorttable_sortfunction = sorttable['sort_'+mtch[1]];
+			} else {
+				this.sorttable_sortfunction = sorttable.guessType(table,col);
+			}
+		} else if (sorted) {
+			sorttable.reverse(table.tBodies[0]);
 			return;
 		}
-		sorttable.updateArrow(this,0,1);
 
 		// build an array to sort. This is a Schwartzian transform thing,
 		// i.e., we "decorate" each row with the actual sort key,
 		// sort based on the sort keys, and then put the rows back in order
 		// which is a lot faster because you only do getInnerText once per row
 		var row_array = [];
-		var col = this.sorttable_columnindex;
-		var rows = this.sorttable_tbody.rows;
 		for (var j=0; j<rows.length; ++j) {
 			row_array[row_array.length] = [sorttable.getInnerText(rows[j].cells[col]), rows[j]];
 		}
@@ -200,8 +203,9 @@ var sorttable = {
 		//sorttable.shaker_sort(row_array, this.sorttable_sortfunction);
 		/* and comment out this one */
 		row_array.sort(this.sorttable_sortfunction);
+		if (inverse) row_array.reverse();
 
-		var tb = this.sorttable_tbody;
+		var tb = table.tBodies[0];
 		for (var j=0; j<row_array.length; ++j) {
 			tb.appendChild(row_array[j][1]);
 		}

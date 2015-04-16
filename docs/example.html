@@ -5,21 +5,94 @@
 <title>sorttable example</title>
 <script src="../sorttable.js"></script>
 <style>
-table{
-	border:2px solid #666;
+/* sorttable styles, these also add the placeholder sort arrow and cursor */
+.sortable{
+	padding:0;
+	border-spacing:0;
+	border:1px solid black;
+	text-align:center;
 }
-table td{
-	border:1px dotted #666;
-}
-table th{
+.sortable th:not(.sorttable_nosort){
 	cursor:pointer;
 }
-table tr:hover{
+.sortable tr:hover{
 	background:#eee;
+}
+.sortable th:not(.sorttable_nosort):not(.sorttable_sorted):not(.sorttable_sorted_reverse):after{
+	opacity:0.25;
+	display:inline-block;
+	content:'\a0\25BE';
+}
+.sortable th{
+	background:#F0F9FF;
+	padding:0 5px;
+	border-bottom:1px solid #000;
+}
+.sortable th:not(:last-child), td:not(:last-child){
+	border-right:1px dotted gray;
+}
+.sortable tr:not(:last-child) td{
+	border-bottom:1px dotted gray;
+}
+/* styles used for examples */
+.ok{
+	color:#019e15;
+}
+.err{
+	color:#e11b31;
+}
+.works{
+	color:orange;
+}
+.question{
+	color:#184df3;
+}
+.colh, .col{
+	display:inline-block;
+	width:300px;
+}
+.colh{
+	vertical-align:middle;
+}
+.col{
+	vertical-align:top;
+}
+/* FAQ styles */
+div.Q{
+	display:block;
+	cursor:pointer;
+	text-decoration:none;
+	color:#fff;
+	background:#000;
+}
+div.Q:before{
+	color:#feba05;
+	content:'Q: ';
+}
+div.Q span{
+	display:none;
+	cursor:default;
+	padding:0 0 8px 20px;
+}
+div.Q span:before{
+	color:#019e15;
+	content:'A: ';
+}
+div.Q:hover{
+	background:#111;
+}
+div.Q:focus{
+	pointer-events:none;
+}
+div.Q:focus span{
+	pointer-events:auto;
+	display:block;
 }
 </style>
 </head>
 <body>
+This modified version of sorttable supports (almost) everything the original from kryogenix did, but also improves compatiblity and adds new features.<br/>
+<i>Note the CSS used for these examples is of course free to use</i>
 <hr/>
 <h4>Simple example taken from <a href="http://kryogenix.org/code/browser/sorttable/">kryogenix.org</a> <small>(note that the "American" example isn't complete)</small>:</h4>
 
@@ -44,56 +117,167 @@ table tr:hover{
 		<td>5554</td><td>22/05/1995</td><td>05/22/1995</td></tr>
 </table>
 
+<hr/>
+<div>
+<div class="err colh">This one will not sort like expected</div>
+<div class="works colh">Use "data-st-key" to provide a custom key (timestamp in this case)</div>
+<div class="ok colh">But you could "simply" extend sorttable instead, and train it to sort your format</div>
+</div>
+<div>
+	<div class="col">
+	
+	<!-- not working example -->
+
+	<table class="sortable">
+	<thead>
+		<tr><th>Duration</th></tr>
+	</thead>
+	<tbody>
+		<tr><td>23 d 12 h 36 m</td></tr>
+		<tr><td>12 d 05 h 00 m</td></tr>
+		<tr><td>7 d 22 h 44 m</td></tr>
+		<tr><td>7 d 17 h 56 m</td></tr>
+		<tr><td>6 d 21 h 40 m</td></tr>
+		<tr><td>2 d 23 h 48 m</td></tr>
+		<tr><td>1 d 14 h 00 m</td></tr>
+		<tr><td>0 d 15 h 40 m</td></tr>
+		<tr><td>115 d 08 h 56 m</td></tr>
+	</tbody>
+	</table>
+
+	</div><div class="col">
+	
+	<!-- custom sortable table with key -->
+
+	<table class="sortable">
+	<thead>
+		<tr><th id="thdur">Duration</th></tr>
+	</thead>
+	<tbody>
+		<tr><td data-st-key="2032561">23 d 12 h 36 m</td></tr>
+		<tr><td data-st-key="1054801">12 d 05 h 00 m</td></tr>
+		<tr><td data-st-key="686641">7 d 22 h 44 m</td></tr>
+		<tr><td data-st-key="669361">7 d 17 h 56 m</td></tr>
+		<tr><td data-st-key="596401">6 d 21 h 40 m</td></tr>
+		<tr><td data-st-key="258481">2 d 23 h 48 m</td></tr>
+		<tr><td data-st-key="136801">1 d 14 h 00 m</td></tr>
+		<tr><td data-st-key="56401">0 d 15 h 40 m</td></tr>
+		<tr><td data-st-key="9968161">115 d 08 h 56 m</td></tr>
+	</tbody>
+	</table>
+	
+	<!-- and a simple button to demonstrate script triggered sort -->
+	
+	<button onclick="sorttable.innerSortFunction.apply(document.getElementById('thdur'),[]);">you can also click me to sort this table :P</button>
+
+	</div><div class="col">
+	
+	<!-- custom sortable table with custom sort function ('duration' isn't one of our known sorts (numeric,alpha,ddmm,mmdd) -->
+
+	<script>
+	/* new sort function */
+	sorttable.sort_duration = function(a,b){
+		var regex = /^(?:(\d+)\s?d\s?)?(?:(\d+)\s?h\s?)?(?:(\d+)\s?m\s?)?(?:(\d+)\s?s?)?$/;
+		var tsA=0,tsB=0, match;
+		match = regex.exec(a[0]);
+		if (match) tsA = (match[1]<<0)*86400 + (match[2]<<0)*3600 + (match[3]<<0)*60 + (match[4]<<0);
+		match = regex.exec(b[0]);
+		if (match) tsB = (match[1]<<0)*86400 + (match[2]<<0)*3600 + (match[3]<<0)*60 + (match[4]<<0);
+		return tsA - tsB;
+	};</script>
+	<table class="sortable">
+	<thead>
+		<tr><th class="sorttable_duration">Duration</th></tr>
+	</thead>
+	<tbody>
+		<tr><td>23 d 12 h 36 m</td></tr>
+		<tr><td>12 d 05 h 00 m</td></tr>
+		<tr><td>7 d 22 h 44 m</td></tr>
+		<tr><td>7 d 17 h 56 m</td></tr>
+		<tr><td>6 d 21 h 40 m</td></tr>
+		<tr><td>2 d 23 h 48 m</td></tr>
+		<tr><td>1 d 14 h 00 m</td></tr>
+		<tr><td>0 d 15 h 40 m</td></tr>
+		<tr><td>115 d 08 h 56 m</td></tr>
+	</tbody>
+	</table>
+	
+	</div>
+</div>
+
+<hr/>
+<div>
+<div class="col" style="width:500px;">ugh, wait! what if I want a column to have a row counter?<br/>
+<b>CSS counters ;)</b> <small>Unless you've got a real good reason why sorttable should do it</small></div>
+<div class="col" style="width:500px;">and if I want every other row to have a different background?<br/>
+<b>CSS background with :nth-child selector</b> is perfectly fine for alternating row colors</div>
+</div>
+<div>
+	<div class="col" style="width:500px;">
+	
+	<!-- consistent row count -->
+
+	<style>
+	.countedtable{counter-reset: countedtable;}
+	.countedtable td:nth-child(1):before{
+		counter-increment:countedtable;
+		content:counter(countedtable);
+	}
+	.countedtable td:nth-child(4):before{
+		content:counter(countedtable);
+	}
+	</style>
+	<table class="sortable countedtable">
+	<thead>
+		<tr><th class="sorttable_nosort">#</th><th>Alpha</th><th>Numeric</th><th class="sorttable_nosort">#</th></tr>
+	</thead>
+	<tbody>
+		<tr><td></td><td>F</td><td>74</td><td></td></tr>
+		<tr><td></td><td>C</td><td>12</td><td></td></tr>
+		<tr><td></td><td>A</td><td>23</td><td></td></tr>
+		<tr><td></td><td>E</td><td>36</td><td></td></tr>
+		<tr><td></td><td>D</td><td>52</td><td></td></tr>
+		<tr><td></td><td>B</td><td>34</td><td></td></tr>
+	</tbody>
+	</table>
+	
+	</div><div class="col" style="width:500px;">
+	
+	<!-- alternating row color (every other, every second row) -->
+	
+	<style>
+	.rowcolor tr:nth-child(even){
+		background:#9de;
+	}
+	.rowcolor tr:nth-child(odd){
+		background:#cfe;
+	}
+	</style>
+	<table class="sortable rowcolor">
+	<thead>
+		<tr><th>Alpha</th><th>Numeric</th></tr>
+	</thead>
+	<tbody>
+		<tr><td>F</td><td>74</td></tr>
+		<tr><td>C</td><td>12</td></tr>
+		<tr><td>A</td><td>23</td></tr>
+		<tr><td>E</td><td>36</td></tr>
+		<tr><td>D</td><td>52</td></tr>
+		<tr><td>B</td><td>34</td></tr>
+	</tbody>
+	</table>
+
+	</div>
+</div>
 <!-- that's it -->
 
 <hr/>
-<h4>The following one requires some help to be properly sortable:</h4>
-<table class="sortable">
-<thead>
-	<tr><th>Duration</th></tr>
-</thead>
-<tbody>
-	<tr><td>23 d 12 h 36 m</td></tr>
-	<tr><td>12 d 05 h 00 m</td></tr>
-	<tr><td>7 d 22 h 44 m</td></tr>
-	<tr><td>7 d 17 h 56 m</td></tr>
-	<tr><td>6 d 21 h 40 m</td></tr>
-	<tr><td>2 d 23 h 48 m</td></tr>
-	<tr><td>1 d 14 h 00 m</td></tr>
-	<tr><td>0 d 15 h 40 m</td></tr>
-	<tr><td>115 d 08 h 56 m</td></tr>
-</tbody>
-</table>
-<br/>
-So lets use "data-st-key" to provide a custom key (timestamp in this case) to make it sortable<br/><br/>
-
-<!-- custom sortable table -->
-
-<table class="sortable">
-<thead>
-	<tr><th id="thdur">Duration</th></tr>
-</thead>
-<tbody>
-	<tr><td data-st-key="2032561">23 d 12 h 36 m</td></tr>
-	<tr><td data-st-key="1054801">12 d 05 h 00 m</td></tr>
-	<tr><td data-st-key="686641">7 d 22 h 44 m</td></tr>
-	<tr><td data-st-key="669361">7 d 17 h 56 m</td></tr>
-	<tr><td data-st-key="596401">6 d 21 h 40 m</td></tr>
-	<tr><td data-st-key="258481">2 d 23 h 48 m</td></tr>
-	<tr><td data-st-key="136801">1 d 14 h 00 m</td></tr>
-	<tr><td data-st-key="56401">0 d 15 h 40 m</td></tr>
-	<tr><td data-st-key="9968161">115 d 08 h 56 m</td></tr>
-</tbody>
-</table>
-
-<!-- and a simple button to demonstrate script triggered sort -->
-
-<br/><br/>
-<button onclick="sorttable.innerSortFunction.apply(document.getElementById('thdur'),[]);">script triggered sort example on above table</button>
-
-<!-- that's it -->
-
-<hr/>
+FAQ <small>(click on one to view anser)</small>
+<div tabindex="0" class="Q">I'm really in a hurry, how to use sorttable with "non-weird" tables?<span>It's as simple as downloading and adding the script: &lt;script src="sorttable.js"&gt;&lt;/script&gt;</span></div>
+<div tabindex="0" class="Q">My table is quite dynamic and content will be added and removed a lot. I've noticed bad performance when the user tries to sort the table. How can I improve that?<span>Just enforce a sort method for each column (numeric,alpha,ddmm,mmdd) by adding a class to their <i>&lt;th&gt;</i> like `sorttable_numeric`<br>Sorttable redetects the sort method each time the user wants to sort a column and the table got changed since last sort.</span></div>
+<div tabindex="0" class="Q">My table is created by Javascript, how to enable sorting on that one?<span>Call `sorttable.makeSortable(TABLE)`</div>
+<div tabindex="0" class="Q">Arrows, how to change them?<span>Use CSS or replace the `sorttable.ARROWS` javascript array. <i>HTML is allowed</i></span></div>
+<div tabindex="0" class="Q">Can I set a column to be unsortable?<span>See the "CSS counters" example for more about it, but basically simply add the class `sorttable_nosort` to every column you don't want to be sortable</div>
 <h4>...</h4>
 </body>
 </html>

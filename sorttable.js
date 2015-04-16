@@ -166,6 +166,7 @@ var sorttable = {
 		arrow.innerHTML = sorttable.ARROWS[inverse];
 	},
 
+	/** @this {Element} */
 	innerSortFunction: function(e) {
 		var sorted = (this.className.indexOf(sorttable.CLASS_SORT[0]) != -1);
 		var inverse = (sorted && this.className.indexOf(sorttable.CLASS_SORT[1])==-1) ? 1 : 0;
@@ -295,6 +296,7 @@ if (document.addEventListener) { // modern browser
 } else if (/MSIE [5-8]\.\d/.test(navigator.userAgent)){ // for Internet Explorer
 	document.write("<script id=__ie_onload defer src=javascript:void(0)><\/script>");
 	var script = document.getElementById("__ie_onload");
+	/** @this {Element} */
 	script.onreadystatechange = function() {
 		if (this.readyState == "complete") {
 			sorttable.init(); // call the onload handler
@@ -307,6 +309,16 @@ if (document.addEventListener) { // modern browser
 		},10);
 }
 window.onload = sorttable.init; // this alone would be enough, but triggers only after everything is fully loaded (eg. images)
+
+/* Google Closure Compiler exports ( https://developers.google.com/closure/compiler/docs/api-tutorial3#export ) */
+window['sorttable'] = sorttable;
+sorttable['sort_numeric'] = sorttable.sort_numeric;
+sorttable['sort_alpha'] = sorttable.sort_alpha;
+sorttable['sort_ddmm'] = sorttable.sort_ddmm;
+sorttable['sort_mmdd'] = sorttable.sort_mmdd;
+sorttable['ARROWS'] = sorttable.ARROWS;
+sorttable['makeSortable'] = sorttable.makeSortable;
+sorttable['innerSortFunction'] = sorttable.innerSortFunction;
 
 /* ******************************************************************
    Supporting functions: bundled here to avoid depending on a library
@@ -354,6 +366,7 @@ function removeEvent(element, type, handler) {
 	}
 };
 
+/** @this {Element} */
 function handleEvent(event) {
 	var returnValue = true;
 	// grab the event object (IE uses a global event object)
@@ -376,9 +389,11 @@ function fixEvent(event) {
 	event.stopPropagation = fixEvent.stopPropagation;
 	return event;
 };
+/** @this {Element} */
 fixEvent.preventDefault = function() {
 	this.returnValue = false;
 };
+/** @this {Element} */
 fixEvent.stopPropagation = function() {
 	this.cancelBubble = true;
 }

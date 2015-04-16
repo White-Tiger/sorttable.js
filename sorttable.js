@@ -14,13 +14,12 @@
   Licenced as X11: http://www.kryogenix.org/code/browser/licence.html
   This basically means: do what you want with it.
 */
-var stIsIE = /*@cc_on!@*/ false;
 
 var sorttable = {
 	DATE_RE: /^(\d\d?)[\/\.-](\d\d?)[\/\.-]((\d\d)?\d\d)$/,
 	CLASS_SORT: ['sorttable_sorted','sorttable_sorted_reverse'],
 	CLASS_ARROW: ['sorttable_sortfwdind','sorttable_sortrevind'],
-	ARROWS: stIsIE ? ['&nbsp<font face="webdings">6</font>','&nbsp<font face="webdings">5</font>'] : ['&nbsp;&#x25BE;','&nbsp;&#x25B4;'],
+	ARROWS: /MSIE [5-8]\.\d/.test(navigator.userAgent) ? ['&nbsp<font face="webdings">6</font>','&nbsp<font face="webdings">5</font>'] : ['&nbsp;&#x25BE;','&nbsp;&#x25B4;'],
 	_isi: false,
 	_timer: null,
 	init: function() {
@@ -293,40 +292,28 @@ var sorttable = {
 	}
 }
 
+/* sorttable initialization */
+if (document.addEventListener) { // modern browser
+	document.addEventListener("DOMContentLoaded", sorttable.init, false);
+} else if (/MSIE [5-8]\.\d/.test(navigator.userAgent)){ // for Internet Explorer
+	document.write("<script id=__ie_onload defer src=javascript:void(0)><\/script>");
+	var script = document.getElementById("__ie_onload");
+	script.onreadystatechange = function() {
+		if (this.readyState == "complete") {
+			sorttable.init(); // call the onload handler
+		}
+	};
+} else if (/WebKit/i.test(navigator.userAgent)) { // for Safari
+	sorttable._timer = setInterval(function() {
+		if (/loaded|complete/.test(document.readyState))
+			sorttable.init(); // call the onload handler
+		},10);
+}
+window.onload = sorttable.init; // this alone would be enough, but triggers only after everything is fully loaded (eg. images)
+
 /* ******************************************************************
    Supporting functions: bundled here to avoid depending on a library
    ****************************************************************** */
-
-// Dean Edwards/Matthias Miller/John Resig
-
-/* for Mozilla/Opera9 */
-if (document.addEventListener) {
-	document.addEventListener("DOMContentLoaded", sorttable.init, false);
-}
-
-/* for Internet Explorer */
-/*@cc_on @*/
-/*@if (@_win32)
-    document.write("<script id=__ie_onload defer src=javascript:void(0)><\/script>");
-    var script = document.getElementById("__ie_onload");
-    script.onreadystatechange = function() {
-        if (this.readyState == "complete") {
-            sorttable.init(); // call the onload handler
-        }
-    };
-/*@end @*/
-
-/* for Safari */
-if (/WebKit/i.test(navigator.userAgent)) { // sniff
-	sorttable._timer = setInterval(function() {
-		if (/loaded|complete/.test(document.readyState)) {
-			sorttable.init(); // call the onload handler
-		}
-	}, 10);
-}
-
-/* for other browsers */
-window.onload = sorttable.init;
 
 // written by Dean Edwards, 2005
 // with input from Tino Zijdel, Matthias Miller, Diego Perini

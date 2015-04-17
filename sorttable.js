@@ -103,46 +103,41 @@ var sorttable = {
 		// for example, you can override the cell text with a customkey attribute.
 		// it also gets .value for <input> fields.
 
-		if (!node) return "";
-
-		var hasInputs = (typeof node.getElementsByTagName == 'function') &&
-			node.getElementsByTagName('input').length;
-
 		var attrib=node.getAttribute('data-st-key');
 		if (attrib)
 			return attrib;
-		if (typeof node.textContent != 'undefined' && !hasInputs)
-			return node.textContent.replace(/^\s+|\s+$/g, '');
-		if (typeof node.innerText != 'undefined' && !hasInputs)
-			return node.innerText.replace(/^\s+|\s+$/g, '');
-		if (typeof node.text != 'undefined' && !hasInputs)
-			return node.text.replace(/^\s+|\s+$/g, '');
-		switch (node.nodeType) {
-			case 3:
-				if (node.nodeName.toLowerCase() == 'input')
-					return node.value.replace(/^\s+|\s+$/g, '');
-			case 4:
-				return node.nodeValue.replace(/^\s+|\s+$/g, '');
-			case 1:
-			case 11:
-				var innerText = '';
-				for (var i = 0; i < node.childNodes.length; ++i) {
-					innerText += sorttable.getInnerText(node.childNodes[i]);
-				}
-				return innerText.replace(/^\s+|\s+$/g, '');
-			default:
-				return '';
+
+		var hasInputs = (typeof node.getElementsByTagName == 'function') &&
+			node.getElementsByTagName('input').length;
+		if (!hasInputs){
+			if (typeof node.textContent != 'undefined')
+				return node.textContent.replace(/^\s+|\s+$/g, '');
+			if (typeof node.innerText != 'undefined')
+				return node.innerText.replace(/^\s+|\s+$/g, '');
+			if (typeof node.text != 'undefined')
+				return node.text.replace(/^\s+|\s+$/g, '');
 		}
+		switch (node.nodeType) {
+		case 3: // TEXT_NODE
+			if (node.nodeName.toLowerCase() == 'input')
+				return node.value.replace(/^\s+|\s+$/g, '');
+		case 4: // CDATA_SECTION_NODE
+			return node.nodeValue.replace(/^\s+|\s+$/g, '');
+		case 1: // ELEMENT_NODE
+		case 11: // DOCUMENT_FRAGMENT_NODE
+			var innerText = '';
+			for (var i = 0; i < node.childNodes.length; ++i) {
+				innerText += sorttable.getInnerText(node.childNodes[i]);
+			}
+			return innerText.replace(/^\s+|\s+$/g, '');
+		}
+		return '';
 	},
 
 	reverse: function(tbody) {
 		// reverse the rows in a tbody
-		var newrows = [];
-		for (var i=0; i<tbody.rows.length; ++i) {
-			newrows[newrows.length] = tbody.rows[i];
-		}
-		for (var i=newrows.length-1; i>=0; --i) {
-			tbody.appendChild(newrows[i]);
+		for (var i=tbody.rows.length; i; ) {
+			tbody.appendChild(tbody.rows[--i]);
 		}
 	},
 
@@ -194,7 +189,7 @@ var sorttable = {
 		// which is a lot faster because you only do getInnerText once per row
 		var row_array = [];
 		for (var j=0; j<rows.length; ++j) {
-			row_array[row_array.length] = [sorttable.getInnerText(rows[j].cells[col]), rows[j]];
+			row_array[j] = [sorttable.getInnerText(rows[j].cells[col]), rows[j]];
 		}
 		/* If you want a stable sort, uncomment the following line */
 		//sorttable.shaker_sort(row_array, this.sorttable_sortfunction);

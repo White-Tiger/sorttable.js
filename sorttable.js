@@ -134,7 +134,7 @@ var sorttable = {
 		return '';
 	},
 
-	reverse: function(tbody) {
+	reverseSort: function(tbody) {
 		// reverse the rows in a tbody
 		for (var i=tbody.rows.length; i; ) {
 			tbody.appendChild(tbody.rows[--i]);
@@ -179,7 +179,7 @@ var sorttable = {
 				this.sorttable_sortfunction = sorttable.guessType(table,col);
 			}
 		} else if (sorted) {
-			sorttable.reverse(table.tBodies[0]);
+			sorttable.reverseSort(table.tBodies[0]);
 			return;
 		}
 

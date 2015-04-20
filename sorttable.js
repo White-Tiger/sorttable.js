@@ -1,4 +1,5 @@
 (function(){'use strict';
+/*jshint bitwise: false*/
 /*
   SortTable
   version 2e2 (enhanced)
@@ -16,7 +17,7 @@
   This basically means: do what you want with it.
 */
 var sorttable = {
-	DATE_RE: /^(\d\d?)[\/\.-](\d\d?)[\/\.-]((\d\d)?\d\d)$/,
+	DATE_RE: /^(\d\d?)[\/\.\-](\d\d?)[\/\.\-](\d{4})$/,
 	CLASS_SORT: ['sorttable_sorted','sorttable_sorted_reverse'],
 	CLASS_ARROW: ['sorttable_sortfwdind','sorttable_sortrevind'],
 	ARROWS: /MSIE [5-8]\.\d/.test(navigator.userAgent) ? ['&nbsp<font face="webdings">6</font>','&nbsp<font face="webdings">5</font>'] : ['&nbsp;&#x25BE;','&nbsp;&#x25B4;'],
@@ -53,9 +54,9 @@ var sorttable = {
 
 		// work through each column and calculate its type
 		var headrow = table.tHead.rows[0].cells;
-		for (var i=0; i<headrow.length; ++i) {
+		for (var i=headrow.length; i--; ) {
 			// manually override the type with a sorttable_type attribute
-			if (!headrow[i].className.match(/\bsorttable_nosort\b/)) { // skip this col
+			if (!/\bsorttable_nosort\b/.test(headrow[i].className)) { // skip this col
 				headrow[i].sorttable_rows = -1;
 				headrow[i].sorttable_col = i;
 				dean_addEvent(headrow[i], "click", sorttable.innerSortFunction);
@@ -66,16 +67,16 @@ var sorttable = {
 	guessType: function(table, column) {
 		// guess the type of a column based on its first non-blank row
 		var sortfn = sorttable.sort_alpha;
-		for (var i=0; i<table.tBodies[0].rows.length; ++i) {
+		for (var i=table.tBodies[0].rows.length; i--; ) {
 			var text = sorttable.getInnerText(table.tBodies[0].rows[i].cells[column]);
 			if (text) {
-				if (text.match(/^-?[£$¤]?[\d,.]+%?$/)) {
+				if (/^-?[£$¤]?[\d,.]+%?$/.test(text)) {
 					return sorttable.sort_numeric;
 				}
 				// check for a date: dd/mm/yyyy or dd/mm/yy
 				// can have / or . or - as separator
 				// can be mm/dd as well
-				var possdate = text.match(sorttable.DATE_RE);
+				var possdate = sorttable.DATE_RE.exec(text);
 				if (possdate) {
 					// looks like a date
 					var first = parseInt(possdate[1]);
@@ -127,7 +128,8 @@ var sorttable = {
 		case 1: // ELEMENT_NODE
 		case 11: // DOCUMENT_FRAGMENT_NODE
 			var innerText = '';
-			for (var i = 0; i < node.childNodes.length; ++i) {
+			var nodes = node.childNodes.length;
+			for (var i = 0; i < nodes; ++i) {
 				innerText += sorttable.getInnerText(node.childNodes[i]);
 			}
 			return innerText.replace(/^\s+|\s+$/g, '');
@@ -167,14 +169,15 @@ var sorttable = {
 		var sorted = (this.className.indexOf(sorttable.CLASS_SORT[0]) != -1);
 		var inverse = (sorted && this.className.indexOf(sorttable.CLASS_SORT[1])==-1) ? 1 : 0;
 		var table = this.parentNode.parentNode.parentNode;
-		var rows = table.tBodies[0].rows;
+		var row = table.tBodies[0].rows;
+		var rows = row.length;
 		var col = this.sorttable_col;
 		var i;
 
 		sorttable.updateArrow(this,inverse,!sorted);
-		if (rows.length !== this.sorttable_rows){
-			this.sorttable_rows = rows.length;
-			var mtch = this.className.match(/\bsorttable_([a-z0-9]+)\b/);
+		if (rows !== this.sorttable_rows){
+			this.sorttable_rows = rows;
+			var mtch = /\bsorttable_([a-z0-9]+)\b/.exec(this.className);
 			if (mtch && sorttable['sort_'+mtch[1]]) {
 				this.sorttable_sortfunction = sorttable['sort_'+mtch[1]];
 			} else {
@@ -190,8 +193,8 @@ var sorttable = {
 		// sort based on the sort keys, and then put the rows back in order
 		// which is a lot faster because you only do getInnerText once per row
 		var row_array = [];
-		for (i=0; i<rows.length; ++i) {
-			row_array[i] = [sorttable.getInnerText(rows[i].cells[col]), rows[i]];
+		for (i=0; i<rows; ++i) {
+			row_array[i] = [sorttable.getInnerText(row[i].cells[col]), row[i]];
 		}
 		/* If you want a stable sort, uncomment the following line */
 		//sorttable.shaker_sort(row_array, this.sorttable_sortfunction);
@@ -200,7 +203,7 @@ var sorttable = {
 		if (inverse) row_array.reverse();
 
 		var tb = table.tBodies[0];
-		for (i=0; i<row_array.length; ++i) {
+		for (i=0; i<rows; ++i) {
 			tb.appendChild(row_array[i][1]);
 		}
 	},
@@ -256,35 +259,20 @@ var sorttable = {
 		if (a[0] < b[0]) return -1;
 		return 1;
 	},
+	dateToNumber: function(d,m,y){
+		return d | m<<5 | y<<9;
+	},
 	sort_ddmm: function(a,b) {
-		var mtch = a[0].match(sorttable.DATE_RE);
-		var y = mtch[3]; m = mtch[2]; d = mtch[1];
-		if (m.length == 1) m = '0' + m;
-		if (d.length == 1) d = '0' + d;
-		var dt1 = y + m + d;
-		mtch = b[0].match(sorttable.DATE_RE);
-		y = mtch[3]; m = mtch[2]; d = mtch[1];
-		if (m.length == 1) m = '0' + m;
-		if (d.length == 1) d = '0' + d;
-		var dt2 = y + m + d;
-		if (dt1 == dt2) return 0;
-		if (dt1 < dt2) return -1;
-		return 1;
+		var mtch = sorttable.DATE_RE.exec(a[0]);
+		var aa = sorttable.dateToNumber(mtch[1],mtch[2],mtch[3]);
+		mtch = sorttable.DATE_RE.exec(b[0]);
+		return aa - sorttable.dateToNumber(mtch[1],mtch[2],mtch[3]);
 	},
 	sort_mmdd: function(a,b) {
-		var mtch = a[0].match(sorttable.DATE_RE);
-		var y = mtch[3]; d = mtch[2]; m = mtch[1];
-		if (m.length == 1) m = '0' + m;
-		if (d.length == 1) d = '0' + d;
-		var dt1 = y + m + d;
-		mtch = b[0].match(sorttable.DATE_RE);
-		y = mtch[3]; d = mtch[2]; m = mtch[1];
-		if (m.length == 1) m = '0' + m;
-		if (d.length == 1) d = '0' + d;
-		var dt2 = y + m + d;
-		if (dt1 == dt2) return 0;
-		if (dt1 < dt2) return -1;
-		return 1;
+		var mtch = sorttable.DATE_RE.exec(a[0]);
+		var aa = sorttable.dateToNumber(mtch[2],mtch[1],mtch[3]);
+		mtch = sorttable.DATE_RE.exec(b[0]);
+		return aa - sorttable.dateToNumber(mtch[2],mtch[1],mtch[3]);
 	}
 };
 

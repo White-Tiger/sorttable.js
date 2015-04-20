@@ -1,3 +1,4 @@
+(function(){'use strict';
 /*
   SortTable
   version 2e2 (enhanced)
@@ -14,7 +15,6 @@
   Licenced as X11: http://www.kryogenix.org/code/browser/licence.html
   This basically means: do what you want with it.
 */
-
 var sorttable = {
 	DATE_RE: /^(\d\d?)[\/\.-](\d\d?)[\/\.-]((\d\d)?\d\d)$/,
 	CLASS_SORT: ['sorttable_sorted','sorttable_sorted_reverse'],
@@ -39,7 +39,7 @@ var sorttable = {
 	},
 
 	makeSortable: function(table) {
-		if (table.getElementsByTagName('thead').length == 0) {
+		if (!table.getElementsByTagName('thead').length) {
 			// table doesn't have a tHead. Since it should have, create one and
 			// put the first table row in it.
 			var the = document.createElement('thead');
@@ -47,7 +47,7 @@ var sorttable = {
 			table.insertBefore(the, table.firstChild);
 		}
 		// Safari doesn't support table.tHead, sigh
-		if (table.tHead == null) table.tHead = table.getElementsByTagName('thead')[0];
+		if (!table.tHead) table.tHead = table.getElementsByTagName('thead')[0];
 
 		if (table.tHead.rows.length != 1) return; // can't cope with two header rows
 
@@ -68,14 +68,14 @@ var sorttable = {
 		var sortfn = sorttable.sort_alpha;
 		for (var i=0; i<table.tBodies[0].rows.length; ++i) {
 			var text = sorttable.getInnerText(table.tBodies[0].rows[i].cells[column]);
-			if (text != '') {
+			if (text) {
 				if (text.match(/^-?[£$¤]?[\d,.]+%?$/)) {
 					return sorttable.sort_numeric;
 				}
 				// check for a date: dd/mm/yyyy or dd/mm/yy
 				// can have / or . or - as separator
 				// can be mm/dd as well
-				var possdate = text.match(sorttable.DATE_RE)
+				var possdate = text.match(sorttable.DATE_RE);
 				if (possdate) {
 					// looks like a date
 					var first = parseInt(possdate[1]);
@@ -121,6 +121,7 @@ var sorttable = {
 		case 3: // TEXT_NODE
 			if (node.nodeName.toLowerCase() == 'input')
 				return node.value.replace(/^\s+|\s+$/g, '');
+			/* falls through */
 		case 4: // CDATA_SECTION_NODE
 			return node.nodeValue.replace(/^\s+|\s+$/g, '');
 		case 1: // ELEMENT_NODE
@@ -168,6 +169,7 @@ var sorttable = {
 		var table = this.parentNode.parentNode.parentNode;
 		var rows = table.tBodies[0].rows;
 		var col = this.sorttable_col;
+		var i;
 
 		sorttable.updateArrow(this,inverse,!sorted);
 		if (rows.length !== this.sorttable_rows){
@@ -188,8 +190,8 @@ var sorttable = {
 		// sort based on the sort keys, and then put the rows back in order
 		// which is a lot faster because you only do getInnerText once per row
 		var row_array = [];
-		for (var j=0; j<rows.length; ++j) {
-			row_array[j] = [sorttable.getInnerText(rows[j].cells[col]), rows[j]];
+		for (i=0; i<rows.length; ++i) {
+			row_array[i] = [sorttable.getInnerText(rows[i].cells[col]), rows[i]];
 		}
 		/* If you want a stable sort, uncomment the following line */
 		//sorttable.shaker_sort(row_array, this.sorttable_sortfunction);
@@ -198,8 +200,8 @@ var sorttable = {
 		if (inverse) row_array.reverse();
 
 		var tb = table.tBodies[0];
-		for (var j=0; j<row_array.length; ++j) {
-			tb.appendChild(row_array[j][1]);
+		for (i=0; i<row_array.length; ++i) {
+			tb.appendChild(row_array[i][1]);
 		}
 	},
 
@@ -207,35 +209,36 @@ var sorttable = {
 		// A stable sort function to allow multi-level sorting of data
 		// see: http://en.wikipedia.org/wiki/Cocktail_sort
 		// thanks to Joseph Nahmias
-		var b = 0;
-		var t = list.length - 1;
+		var i,tmp;
+		var start = 0;
+		var end = list.length - 1;
 		var swap = true;
 
-		while(swap) {
+		do{
 			swap = false;
-			for(var i=b; i<t; ++i) {
+			for(i=start; i<end; ++i) {
 				if(comp_func(list[i], list[i+1]) > 0) {
-					var q = list[i];
+					tmp = list[i];
 					list[i] = list[i+1];
-					list[i+1] = q;
+					list[i+1] = tmp;
 					swap = true;
 				}
 			} // for
-			--t;
+			--end;
 
 			if (!swap) break;
 
-			for(var i=t; i>b; --i) {
+			for(i=end; i>start; --i) {
 				if(comp_func(list[i], list[i-1]) < 0) {
-					var q = list[i];
+					tmp = list[i];
 					list[i] = list[i-1];
-					list[i-1] = q;
+					list[i-1] = tmp;
 					swap = true;
 				}
 			} // for
-			++b;
+			++start;
 
-		} // while(swap)
+		}while(swap);
 	},
 
 	/* sort functions
@@ -255,12 +258,12 @@ var sorttable = {
 	},
 	sort_ddmm: function(a,b) {
 		var mtch = a[0].match(sorttable.DATE_RE);
-		var y = mtch[3], m = mtch[2], d = mtch[1];
+		var y = mtch[3]; m = mtch[2]; d = mtch[1];
 		if (m.length == 1) m = '0' + m;
 		if (d.length == 1) d = '0' + d;
 		var dt1 = y + m + d;
 		mtch = b[0].match(sorttable.DATE_RE);
-		y = mtch[3], m = mtch[2], d = mtch[1];
+		y = mtch[3]; m = mtch[2]; d = mtch[1];
 		if (m.length == 1) m = '0' + m;
 		if (d.length == 1) d = '0' + d;
 		var dt2 = y + m + d;
@@ -270,12 +273,12 @@ var sorttable = {
 	},
 	sort_mmdd: function(a,b) {
 		var mtch = a[0].match(sorttable.DATE_RE);
-		var y = mtch[3], d = mtch[2], m = mtch[1];
+		var y = mtch[3]; d = mtch[2]; m = mtch[1];
 		if (m.length == 1) m = '0' + m;
 		if (d.length == 1) d = '0' + d;
 		var dt1 = y + m + d;
 		mtch = b[0].match(sorttable.DATE_RE);
-		y = mtch[3], d = mtch[2], m = mtch[1];
+		y = mtch[3]; d = mtch[2]; m = mtch[1];
 		if (m.length == 1) m = '0' + m;
 		if (d.length == 1) d = '0' + d;
 		var dt2 = y + m + d;
@@ -283,7 +286,7 @@ var sorttable = {
 		if (dt1 < dt2) return -1;
 		return 1;
 	}
-}
+};
 
 /* sorttable initialization */
 if (document.addEventListener) { // modern browser
@@ -346,7 +349,7 @@ function dean_addEvent(element, type, handler) {
 		// assign a global event handler to do all the work
 		element["on" + type] = handleEvent;
 	}
-};
+}
 // a counter used to create unique IDs
 dean_addEvent.guid = 1;
 
@@ -359,7 +362,7 @@ function removeEvent(element, type, handler) {
 			delete element.events[type][handler.$$guid];
 		}
 	}
-};
+}
 
 /** @this {Element} */
 function handleEvent(event) {
@@ -376,14 +379,14 @@ function handleEvent(event) {
 		}
 	}
 	return returnValue;
-};
+}
 
 function fixEvent(event) {
 	// add W3C standard event methods
 	event.preventDefault = fixEvent.preventDefault;
 	event.stopPropagation = fixEvent.stopPropagation;
 	return event;
-};
+}
 /** @this {Element} */
 fixEvent.preventDefault = function() {
 	this.returnValue = false;
@@ -391,7 +394,7 @@ fixEvent.preventDefault = function() {
 /** @this {Element} */
 fixEvent.stopPropagation = function() {
 	this.cancelBubble = true;
-}
+};
 
 // Dean's forEach: http://dean.edwards.name/base/forEach.js
 /*
@@ -446,3 +449,5 @@ var forEach = function(object, block, context) {
 		resolve.forEach(object, block, context);
 	}
 };
+
+})(); // sorttable scope

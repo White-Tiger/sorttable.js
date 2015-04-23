@@ -17,7 +17,8 @@
   This basically means: do what you want with it.
 */
 var sorttable = {
-	DATE_RE: /^(\d\d?)[\/\.\-](\d\d?)[\/\.\-](\d{4})$/,
+	RE_NUMERIC: /^[+\-£$¤¥]{0,2}\s*(?:\d+(?:([ ',\.])(?:\d{3}([ ',\.]))*(\d*))?|([,\.])\d+)\s*[€₽%]?$/,
+	RE_DATE: /^(\d\d?)[\/\.\-](\d\d?)[\/\.\-](\d{4})$/,
 	CLASS_SORT: ['sorttable_sorted','sorttable_sorted_reverse'],
 	CLASS_ARROW: ['sorttable_sortfwdind','sorttable_sortrevind'],
 	ARROWS: /MSIE [5-8]\.\d/.test(navigator.userAgent) ? ['&nbsp<font face="webdings">6</font>','&nbsp<font face="webdings">5</font>'] : ['&nbsp;&#x25BE;','&nbsp;&#x25B4;'],
@@ -66,35 +67,68 @@ var sorttable = {
 
 	guessType: function(table, column) {
 		// guess the type of a column based on its first non-blank row
-		var sortfn = sorttable.sort_alpha;
+		var NUMERIC_POINT=1, NUMERIC_COMMA=2, DATE_DDMM=4, DATE_MMDD=8;
+		var NUMERIC = NUMERIC_POINT | NUMERIC_COMMA;
+		var DATE = DATE_DDMM | DATE_MMDD;
+		var ALL = NUMERIC | DATE;
+		var guess = ALL;
+		var text, mtch;
 		for (var i=table.tBodies[0].rows.length; i--; ) {
-			var text = sorttable.getInnerText(table.tBodies[0].rows[i].cells[column]);
+			text = sorttable.getInnerText(table.tBodies[0].rows[i].cells[column]);
 			if (text) {
-				if (/^-?[£$¤]?[\d,.]+%?$/.test(text)) {
-					return sorttable.sort_numeric;
-				}
-				// check for a date: dd/mm/yyyy or dd/mm/yy
-				// can have / or . or - as separator
-				// can be mm/dd as well
-				var possdate = sorttable.DATE_RE.exec(text);
-				if (possdate) {
-					// looks like a date
-					var first = parseInt(possdate[1]);
-					var second = parseInt(possdate[2]);
-					if (first > 12) {
-						// definitely dd/mm
-						return sorttable.sort_ddmm;
-					} else if (second > 12) {
-						return sorttable.sort_mmdd;
-					} else {
-						// looks like a date, but we can't tell which, so assume
-						// that it's dd/mm (English imperialism!) and keep looking
-						sortfn = sorttable.sort_ddmm;
+				if (guess&NUMERIC && (mtch = sorttable.RE_NUMERIC.exec(text))) {
+					guess&=~DATE;
+					var decimal_point = null;
+					if (mtch[4]) {
+						decimal_point = mtch[4];
+					} else if (mtch[1]) {
+						if (mtch[2]) {
+							if (mtch[1] != mtch[2])
+								decimal_point = mtch[2];
+						} else if (mtch[3].length != 3) {
+							decimal_point = mtch[1];
+						}
 					}
+					if (decimal_point) {
+						if (decimal_point === ',') {
+							guess&=~NUMERIC_POINT;
+						} else {
+							guess&=~NUMERIC_COMMA;
+						}
+					}
+				} else if (guess&DATE) {
+					guess&=~NUMERIC;
+					// check for a date: dd/mm/yyyy | mm/dd/yyyy
+					// can have / or . or - as separator
+					mtch = sorttable.RE_DATE.exec(text);
+					if (mtch) {
+						if (mtch[1]<<0 > 12) {
+							guess&=~DATE_MMDD;
+						} else if (mtch[2]<<0 > 12) {
+							guess&=~DATE_DDMM;
+						}
+					} else {
+						guess&=~DATE;
+					}
+				} else {
+					guess = 0;
+					break;
 				}
 			}
 		}
-		return sortfn;
+		switch(guess){
+		case NUMERIC_COMMA:
+			return sorttable.sort_numeric_comma;
+		case NUMERIC_POINT:
+		case NUMERIC:
+			return sorttable.sort_numeric;
+		case DATE_MMDD:
+			return sorttable.sort_mmdd;
+		case DATE_DDMM:
+		case DATE:
+			return sorttable.sort_ddmm;
+		}
+		return sorttable.sort_alpha; // fallback as we couldn't decide
 	},
 
 	getInnerText: function(node) {
@@ -248,10 +282,13 @@ var sorttable = {
 	   each sort function takes two parameters, a and b
 	   you are comparing a[0] and b[0] */
 	sort_numeric: function(a,b) {
-		var aa = parseFloat(a[0].replace(/[^0-9.-]/g, ''));
-		if (isNaN(aa)) aa = 0;
-		var bb = parseFloat(b[0].replace(/[^0-9.-]/g, ''));
-		if (isNaN(bb)) bb = 0;
+		var aa = parseFloat(a[0].replace(/[^\-\d.]/g,''))<<0;
+		var bb = parseFloat(b[0].replace(/[^\-\d.]/g,''))<<0;
+		return aa - bb;
+	},
+	sort_numeric_comma: function(a,b) {
+		var aa = parseFloat(a[0].replace(/[^\-\d,]/g,'').replace(/,/,'.'))<<0;
+		var bb = parseFloat(b[0].replace(/[^\-\d,]/g,'').replace(/,/,'.'))<<0;
 		return aa - bb;
 	},
 	sort_alpha: function(a,b) {
@@ -263,15 +300,15 @@ var sorttable = {
 		return d | m<<5 | y<<9;
 	},
 	sort_ddmm: function(a,b) {
-		var mtch = sorttable.DATE_RE.exec(a[0]);
+		var mtch = sorttable.RE_DATE.exec(a[0]);
 		var aa = sorttable.dateToNumber(mtch[1],mtch[2],mtch[3]);
-		mtch = sorttable.DATE_RE.exec(b[0]);
+		mtch = sorttable.RE_DATE.exec(b[0]);
 		return aa - sorttable.dateToNumber(mtch[1],mtch[2],mtch[3]);
 	},
 	sort_mmdd: function(a,b) {
-		var mtch = sorttable.DATE_RE.exec(a[0]);
+		var mtch = sorttable.RE_DATE.exec(a[0]);
 		var aa = sorttable.dateToNumber(mtch[2],mtch[1],mtch[3]);
-		mtch = sorttable.DATE_RE.exec(b[0]);
+		mtch = sorttable.RE_DATE.exec(b[0]);
 		return aa - sorttable.dateToNumber(mtch[2],mtch[1],mtch[3]);
 	}
 };
@@ -298,13 +335,14 @@ window.onload = sorttable.init; // this alone would be enough, but triggers only
 
 /* Google Closure Compiler exports ( https://developers.google.com/closure/compiler/docs/api-tutorial3#export ) */
 window['sorttable'] = sorttable;
-sorttable['sort_numeric'] = sorttable.sort_numeric;
-sorttable['sort_alpha'] = sorttable.sort_alpha;
-sorttable['sort_ddmm'] = sorttable.sort_ddmm;
-sorttable['sort_mmdd'] = sorttable.sort_mmdd;
 sorttable['ARROWS'] = sorttable.ARROWS;
 sorttable['makeSortable'] = sorttable.makeSortable;
 sorttable['innerSortFunction'] = sorttable.innerSortFunction;
+sorttable['sort_numeric'] = sorttable.sort_numeric;
+sorttable['sort_numeric_comma'] = sorttable.sort_numeric_comma;
+sorttable['sort_alpha'] = sorttable.sort_alpha;
+sorttable['sort_ddmm'] = sorttable.sort_ddmm;
+sorttable['sort_mmdd'] = sorttable.sort_mmdd;
 
 /* ******************************************************************
    Supporting functions: bundled here to avoid depending on a library

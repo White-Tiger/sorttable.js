@@ -20,7 +20,7 @@
 }
 .sortable th:not(.sorttable_nosort):not(.sorttable_sorted):not(.sorttable_sorted_reverse):after{
 	opacity:0.25;
-	display:inline-block;
+	display:inline;
 	content:'\a0\25BE';
 }
 .sortable th{
@@ -35,27 +35,19 @@
 	border-bottom:1px dotted gray;
 }
 /* styles used for examples */
-.ok{
-	color:#019e15;
-}
-.err{
-	color:#e11b31;
-}
-.works{
-	color:orange;
-}
-.question{
-	color:#184df3;
-}
-.colh, .col{
-	display:inline-block;
+a{color:#184df3}
+a:hover,a:focus{color:#567BF0}
+.ok{color:#019e15;}
+.err{color:#e11b31;}
+.works{color:orange;}
+.question{color:#184df3;}
+.row{overflow:hidden;}
+.row>div{
+	float:left;
 	width:300px;
 }
-.colh{
-	vertical-align:middle;
-}
-.col{
-	vertical-align:top;
+.row.w500>div{
+	width:500px;
 }
 /* FAQ styles */
 div.Q{
@@ -91,46 +83,56 @@ div.Q:focus span{
 </style>
 </head>
 <body>
-This modified version of sorttable supports (almost) everything the original from kryogenix did, but also improves compatiblity and adds new features.<br/>
+This modified version of sorttable supports (almost) everything the original from kryogenix did, but also improves browser compatibility and adds new features to it.<br/>
 <i>Note the CSS used for these examples is of course free to use</i>
 <hr/>
-<h4>Simple example taken from <a href="http://kryogenix.org/code/browser/sorttable/">kryogenix.org</a> <small>(note that the "American" example isn't complete)</small>:</h4>
+<h4>Simple example based on <a href="http://kryogenix.org/code/browser/sorttable/">kryogenix.org's</a>:</h4>
 
 <!-- sortable table -->
 
-<table class="sortable">
+<table class="sortable" id="example">
 	<tr>
-		<th>Name</th><th>Salary</th>
-		<th>Extension</th><th>Start date</th><th>Start date (American)</th>
+		<th>name</th><th>salary</th><th>salary €</th>
+		<th>extension</th><th>dd/mm/yyyy</th><th>mm/dd/yyyy</th><th>dd.mm.yyyy</th>
+		<th>misc numbers</th><th>numbers (comma)</th>
 	</tr>
-	<tr><td>Bloggs, Fred</td><td>$12000.00</td>
-		<td>1353</td><td>18/08/2003</td><td>08/18/2003</td></tr>
-	<tr><td>Turvey, Kevin</td><td>$191200.00</td>
-		<td>2342</td><td>02/05/1979</td><td>05/02/1979</td></tr>
-	<tr><td>Mbogo, Arnold</td><td>$32010.12</td>
-		<td>2755</td><td>09/08/1998</td><td>08/09/1998</td></tr>
-	<tr><td>Shakespeare, Bill</td><td>$122000.00</td>
-		<td>3211</td><td>12/11/1961</td><td>11/12/1961</td></tr>
-	<tr><td>Shakespeare, Hamnet</td><td>$9000</td>
-		<td>9005</td><td>01/01/2002</td><td>01/01/2002</td></tr>
-	<tr><td>Fitz, Marvin</td><td>$3300</td>
-		<td>5554</td><td>22/05/1995</td><td>05/22/1995</td></tr>
+	<tr><td>Bloggs, Fred</td><td>$12000.00</td><td>11105.46€</td>
+		<td>1353</td><td>18/08/2003</td><td>08/18/2003</td><td>18.8.2003</td>
+		<td>+10,000.66</td><td>+10.000,66</td></tr>
+	<tr><td>Turvey, Kevin</td><td>$191200.00</td><td>176946.96€</td>
+		<td>2342</td><td>02/05/1979</td><td>05/02/1979</td><td>2.5.1979</td>
+		<td>10000.</td><td>10000,</td></tr>
+	<tr><td>Mbogo, Arnold</td><td>$32010.12</td><td>29623.92€</td>
+		<td>2755</td><td>09/08/1998</td><td>08/09/1998</td><td>9.8.1998</td>
+		<td>1 234 567.89</td><td>1 234 567,89</td></tr>
+	<tr><td>Shakespeare, Bill</td><td>$122000.00</td><td>112905.48€</td>
+		<td>3211</td><td>12/11/1961</td><td>11/12/1961</td><td>12.11.1961</td>
+		<td>+3,425,422</td><td>+3.425.422</td></tr>
+	<tr><td>Shakespeare, Hamnet</td><td>$9000</td><td>8329.09€</td>
+		<td>9005</td><td>01/01/2002</td><td>01/01/2002</td><td>1.1.2002</td>
+		<td>-21,000,000</td><td>-21.000.000</td></tr>
+	<tr><td>Fitz, Marvin</td><td>$3300</td><td>3054.00€</td>
+		<td>5554</td><td>22/05/1995</td><td>05/22/1995</td><td>22.5.1995</td>
+		<td>10000.12</td><td>10000,12</td></tr>
+	<tr><td>Doe, John</td><td>$4139</td><td>3830.46€</td>
+		<td>3674</td><td>03/08/1998</td><td>08/03/1998</td><td>3.8.1998</td>
+		<td>1'234'567.89</td><td>1'234'567,89</td></tr>
 </table>
 
 <hr/>
-<div>
-<div class="err colh">This one will not sort like expected</div>
-<div class="works colh">Use "data-st-key" to provide a custom key (timestamp in this case)</div>
-<div class="ok colh">But you could "simply" extend sorttable instead, and train it to sort your format</div>
+<div class="row">
+<div class="err">This one will not sort the expected way</div>
+<div class="works">Use "data-st-key" to provide a custom key (timestamp in this case)</div>
+<div class="ok">But you could "simply" extend sorttable instead, and train it to sort your format</div>
 </div>
-<div>
-	<div class="col">
+<div class="row">
+	<div>
 	
 	<!-- not working example -->
 
 	<table class="sortable">
 	<thead>
-		<tr><th>Duration</th></tr>
+		<tr><th>duration</th></tr>
 	</thead>
 	<tbody>
 		<tr><td>23 d 12 h 36 m</td></tr>
@@ -145,13 +147,13 @@ This modified version of sorttable supports (almost) everything the original fro
 	</tbody>
 	</table>
 
-	</div><div class="col">
+	</div><div>
 	
 	<!-- custom sortable table with key -->
 
 	<table class="sortable">
 	<thead>
-		<tr><th id="thdur">Duration</th></tr>
+		<tr><th id="thdur">duration</th></tr>
 	</thead>
 	<tbody>
 		<tr><td data-st-key="2032561">23 d 12 h 36 m</td></tr>
@@ -168,9 +170,9 @@ This modified version of sorttable supports (almost) everything the original fro
 	
 	<!-- and a simple button to demonstrate script triggered sort -->
 	
-	<button onclick="sorttable.innerSortFunction.apply(document.getElementById('thdur'),[]);">you can also click me to sort this table :P</button>
+	<button onclick="sorttable.innerSortFunction.call(document.getElementById('thdur'));this.textContent='I sort this table'">&nbsp;what do I do?&nbsp;</button>
 
-	</div><div class="col">
+	</div><div>
 	
 	<!-- custom sortable table with custom sort function ('duration' isn't one of our known sorts (numeric,alpha,ddmm,mmdd) -->
 
@@ -185,9 +187,9 @@ This modified version of sorttable supports (almost) everything the original fro
 		if (match) tsB = (match[1]<<0)*86400 + (match[2]<<0)*3600 + (match[3]<<0)*60 + (match[4]<<0);
 		return tsA - tsB;
 	};</script>
-	<table class="sortable">
+	<table class="sortable" id="custom">
 	<thead>
-		<tr><th class="sorttable_duration">Duration</th></tr>
+		<tr><th class="sorttable_duration">duration</th></tr>
 	</thead>
 	<tbody>
 		<tr><td>23 d 12 h 36 m</td></tr>
@@ -206,14 +208,14 @@ This modified version of sorttable supports (almost) everything the original fro
 </div>
 
 <hr/>
-<div>
-<div class="col" style="width:500px;">ugh, wait! what if I want a column to have a row counter?<br/>
+<div class="row w500">
+<div>ugh, wait! what if I want a column to have a row counter?<br/>
 <b>CSS counters ;)</b> <small>Unless you've got a real good reason why sorttable should do it</small></div>
-<div class="col" style="width:500px;">and if I want every other row to have a different background?<br/>
+<div>and if I want every other row to have a different background?<br/>
 <b>CSS background with :nth-child selector</b> is perfectly fine for alternating row colors</div>
 </div>
-<div>
-	<div class="col" style="width:500px;">
+<div class="row w500">
+	<div>
 	
 	<!-- consistent row count -->
 
@@ -227,9 +229,9 @@ This modified version of sorttable supports (almost) everything the original fro
 		content:counter(countedtable);
 	}
 	</style>
-	<table class="sortable countedtable">
+	<table class="sortable countedtable" id="cssdemo">
 	<thead>
-		<tr><th class="sorttable_nosort">#</th><th>Alpha</th><th>Numeric</th><th class="sorttable_nosort">#</th></tr>
+		<tr><th class="sorttable_nosort">#</th><th>alpha</th><th>numeric</th><th class="sorttable_nosort">#</th></tr>
 	</thead>
 	<tbody>
 		<tr><td></td><td>F</td><td>74</td><td></td></tr>
@@ -241,7 +243,7 @@ This modified version of sorttable supports (almost) everything the original fro
 	</tbody>
 	</table>
 	
-	</div><div class="col" style="width:500px;">
+	</div><div>
 	
 	<!-- alternating row color (every other, every second row) -->
 	
@@ -255,7 +257,7 @@ This modified version of sorttable supports (almost) everything the original fro
 	</style>
 	<table class="sortable rowcolor">
 	<thead>
-		<tr><th>Alpha</th><th>Numeric</th></tr>
+		<tr><th>alpha</th><th>numeric</th></tr>
 	</thead>
 	<tbody>
 		<tr><td>F</td><td>74</td></tr>
@@ -269,7 +271,8 @@ This modified version of sorttable supports (almost) everything the original fro
 
 	</div>
 </div>
-<!-- that's it -->
+
+<!-- FAQ -->
 
 <hr/>
 FAQ <small>(click on one to view anser)</small>
@@ -278,6 +281,192 @@ FAQ <small>(click on one to view anser)</small>
 <div tabindex="0" class="Q">My table is created by Javascript, how to enable sorting on that one?<span>Call `sorttable.makeSortable(TABLE)`</span></div>
 <div tabindex="0" class="Q">Arrows, how to change them?<span>Use CSS or replace the `sorttable.ARROWS` javascript array. <i>HTML is allowed</i></span></div>
 <div tabindex="0" class="Q">Can I set a column to be unsortable?<span>See the "CSS counters" example for more about it, but basically simply add the class `sorttable_nosort` to every column you don't want to be sortable</span></div>
+You can use sorttable to make any page's tables sortable, simply bookmark the link '<a href='javascript:(function(){if(!window.sorttable){var a=document.createElement("SCRIPT");a.async=!0;a.src="https://raw.githubusercontent.com/White-Tiger/sorttable.js/master/sorttable.js";a.onload=function(){sorttable.init();for(var a=document.getElementsByTagName("table"),b=a.length;b--;)sorttable.makeSortable(a[b])};document.getElementsByTagName("head")[0].appendChild(a)}})();'>activate sorttable</a>' or create a Greasemonkey userscript from it.
 <h4>...</h4>
+
+<!-- tests against original sorttable and sorttable.min -->
+
+<hr/>
+<div style="min-height:200px;">
+These buttons are mostly for testing purposes or comparison to original sorttable<br/>
+<button onclick="tstUnload()">unload sorttable</button>
+<button onclick="tstLoad('sorttable','../sorttable.js')">load sorttable</button>
+<button onclick="tstLoad('sorttable_min','../sorttable.min.js')">load sorttable.min</button>
+<button onclick="tstLoad('sorttable_orig','http://kryogenix.org/code/browser/sorttable/sorttable.js')">load original sorttable</button>
+<br/>
+<button onclick="tstQuickTest()">quick test</button>
+<div id="test"></div>
+</div>
+<!--IE < 11 compatibility fix:--><script id="__ie_onload"></script>
+<script>
+var testdiv = document.getElementById('test');
+var $sorttable = window.sorttable;
+var $sorttable_min = undefined;
+var $sorttable_orig = undefined;
+// helper
+function loadJS_cb()
+{
+	var state = this.readyState;
+	if (this.onload && (!state || /loaded|complete/.test(state))) {
+		this.onload = undefined;
+		this.$callback();
+	}
+}
+function loadJS(url,callback,target)
+{
+	if (target) target = document.getElementById(target);
+	if (!target) target = document.getElementsByTagName('head')[0];
+	var ele = target.childNodes;
+	for(var i=ele.length; i-- ;)
+		if (ele[i].nodeName === 'SCRIPT' && ele[i].getAttribute('src',0) == url)
+			return false;
+	var script = document.createElement('SCRIPT');
+	script.async = true;
+	script.src = url;
+	script.$callback = callback;
+	if (callback)
+		script.onreadystatechange = script.onload = loadJS_cb;
+	target.appendChild(script);
+	return true;
+}
+// init
+function init_once(){
+	// add sort_duration if needed
+	if ($sorttable) sorttable.sort_duration = $sorttable.sort_duration;
+	// call original init
+	if (sorttable.init) sorttable.init();
+}
+function reinit(){
+	var tables = document.getElementsByTagName('table');
+	for(var i=tables.length; i--; ) {
+		if (~tables[i].className.search(/\bsortable\b/))
+			sorttable.makeSortable(tables[i]);
+	}
+}
+// buttons
+function tstUnload(){
+	if (window.sorttable) {
+		testdiv.innerHTML = '';
+		var tables = document.getElementsByTagName('table');
+		for (var tab=tables.length; tab--; ) {
+			if (~tables[tab].className.search(/\bsortable\b/)) {
+				var head = tables[tab].tHead.rows[0];
+				var headrow = head.cells;
+				// remove sorted arrow
+				if (head.stArrow) { // ours
+					head.stArrow.parentNode.removeChild(head.stArrow);
+					head.stArrow = undefined;
+				}
+				// remove sorted arrow (old)
+				var ele = document.getElementById('sorttable_sortfwdind');
+				if (ele) ele.parentNode.removeChild(ele);
+				ele = document.getElementById('sorttable_sortrevind');
+				if (ele) ele.parentNode.removeChild(ele);
+				// loop columns
+				for (var i=headrow.length; i--; ) {
+					if (!/\bsorttable_nosort\b/.test(headrow[i].className)) {
+						// remove classes
+						headrow[i].className = headrow[i].className
+							.replace(new RegExp('\\s*\\b(?:sorttable_sorted|sorttable_sorted_reverse)\\b\\s*'),'');
+						// disable click
+						//headrow[i].removeEventListener('click',sorttable.innerSortFunction);
+						// disable click (old)
+						headrow[i].parentNode.replaceChild(headrow[i].cloneNode(true), headrow[i]);
+					}
+				}
+			}
+		}
+		window.sorttable = undefined;
+	}
+	testdiv.innerHTML = 'successfully unloaded';
+}
+function tstLoad(name,url){
+	tstUnload();
+	testdiv.innerHTML = '';
+	if (!window['$'+name]){
+		loadJS(url,function(){
+			window['$'+name] = window.sorttable;
+			init_once();
+			tstLoad(name,url);
+		});
+		return;
+	}
+	window.sorttable = window['$'+name];
+	reinit();
+	testdiv.innerHTML = 'successfully loaded '+name;
+}
+function tstQuickTest(){
+	var tests = [
+		// id, cols, col-test
+		['example',9,
+			['Bloggs, Fred','Turvey, Kevin'],
+			['$3300','$191200.00'],
+			[],
+			['1353','9005'],
+			['12/11/1961','18/08/2003'],
+			[],
+			[],
+			['-21,000,000','+3,425,422'],
+			[],
+		],
+		['custom',1,
+			['0 d 15 h 40 m','115 d 08 h 56 m']
+		],
+		['cssdemo',4,
+			0,
+			['A','F'],
+			['12','74'],
+			0,
+		]
+	];
+	testdiv.innerHTML = '';
+	for (var tst=0; tst<tests.length; ++tst){
+		var test = tests[tst];
+		testdiv.innerHTML+='Test #'+(tst+1)+': ';
+		try{
+			var table = document.getElementById(test[0]);
+			var header = table.tHead.rows[0].cells;
+			var lastsort;
+			var fails = '';
+			for (var i=0; i<test[1]; ++i){
+				var name = header[i].textContent || header[i].innerText;
+				if(/\bsorttable_nosort\b/.test(header[i].className))
+					continue;
+				if(!/\bsorttable_sorted\b/.test(header[i].className)){
+					sorttable.innerSortFunction.call(header[i]);
+				}
+				var rows = table.tBodies[0].rows;
+				var lastrow = rows.length-1;
+				var thissort = [];
+				for (var row=0; row<rows.length; ++row)
+					thissort[row]=rows[row];
+				if (test[2+i]){
+					var err = '';
+					if (test[2+i].length==2){
+						var data0 = rows[0].cells[i].textContent || rows[0].cells[i].innerText;
+						var data1 = rows[lastrow].cells[i].textContent || rows[lastrow].cells[i].innerText;
+						if (data0 != test[2+i][0] || data1 != test[2+i][1]){
+							err = 'wrongly sorted';
+						}
+					}else if (thissort.every){
+						if (!thissort.every(function(val,idx){return val===lastsort[idx]}))
+							err = 'order changed';
+					}else{
+						err = 'test not supported';
+					}
+					if (err) fails+='<u>'+name+'</u> <small>#'+(i+1)+'</small>: <i>'+err+'</i> ; ';
+				}
+				lastsort = thissort;
+			}
+			if (fails) throw(fails);
+			testdiv.innerHTML+='<span class="ok">passed</span><br/>';
+		}catch(e){
+			console.log(e);
+			testdiv.innerHTML+='<span class="err">failed</span>, '+e+'<br/>';
+		}
+	}
+}
+</script>
+
 </body>
 </html>

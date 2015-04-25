@@ -58,8 +58,8 @@ var sorttable = {
 		for (var i=headrow.length; i--; ) {
 			// manually override the type with a sorttable_type attribute
 			if (!/\bsorttable_nosort\b/.test(headrow[i].className)) { // skip this col
-				headrow[i].sorttable_rows = -1;
-				headrow[i].sorttable_col = i;
+				headrow[i]['stRows'] = -1;
+				headrow[i]['stCol'] = i;
 				dean_addEvent(headrow[i], "click", sorttable.innerSortFunction);
 			}
 		}
@@ -179,7 +179,7 @@ var sorttable = {
 	},
 
 	updateArrow: function(th,inverse,create) {
-		var arrow = th.parentNode.stArrow;
+		var arrow = th.parentNode['stArrow'];
 		if (create){
 			if (arrow){
 				var preth = arrow.parentNode;
@@ -191,7 +191,7 @@ var sorttable = {
 			}
 			arrow = document.createElement('span');
 			th.className += ' '+sorttable.CLASS_SORT[inverse];
-			th.parentNode.stArrow = th.appendChild(arrow);
+			th.parentNode['stArrow'] = th.appendChild(arrow);
 		} else // toggle class
 			th.className = th.className.replace(new RegExp('\\b'+sorttable.CLASS_SORT[(1+inverse)%2]+'\\b'), sorttable.CLASS_SORT[inverse]);
 		arrow.className = sorttable.CLASS_ARROW[inverse];
@@ -205,17 +205,17 @@ var sorttable = {
 		var table = this.parentNode.parentNode.parentNode;
 		var row = table.tBodies[0].rows;
 		var rows = row.length;
-		var col = this.sorttable_col;
+		var col = this['stCol'];
 		var i;
 
 		sorttable.updateArrow(this,inverse,!sorted);
-		if (rows !== this.sorttable_rows){
-			this.sorttable_rows = rows;
+		if (rows !== this['stRows']){
+			this['stRows'] = rows;
 			var mtch = /\bsorttable_([a-z0-9]+)\b/.exec(this.className);
 			if (mtch && sorttable['sort_'+mtch[1]]) {
-				this.sorttable_sortfunction = sorttable['sort_'+mtch[1]];
+				this['stFunc'] = sorttable['sort_'+mtch[1]];
 			} else {
-				this.sorttable_sortfunction = sorttable.guessType(table,col);
+				this['stFunc'] = sorttable.guessType(table,col);
 			}
 		} else if (sorted) {
 			sorttable.reverseSort(table.tBodies[0]);
@@ -231,9 +231,9 @@ var sorttable = {
 			row_array[i] = [sorttable.getInnerText(row[i].cells[col]), row[i]];
 		}
 		/* If you want a stable sort, uncomment the following line */
-		//sorttable.shaker_sort(row_array, this.sorttable_sortfunction);
+		//sorttable.shaker_sort(row_array, this['stFunc']);
 		/* and comment out this one */
-		row_array.sort(this.sorttable_sortfunction);
+		row_array.sort(this['stFunc']);
 		if (inverse) row_array.reverse();
 
 		var tb = table.tBodies[0];

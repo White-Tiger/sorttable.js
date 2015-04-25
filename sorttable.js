@@ -64,7 +64,7 @@ var sorttable = {
 		}
 	},
 
-	guessType: function(table, column) {
+	guessType: function(table, column, row_array) {
 		// guess the type of a column based on its first non-blank row
 		var NUMERIC_POINT=1, NUMERIC_COMMA=2, DATE_DDMM=4, DATE_MMDD=8;
 		var NUMERIC = NUMERIC_POINT | NUMERIC_COMMA;
@@ -72,9 +72,12 @@ var sorttable = {
 		var ALL = NUMERIC | DATE;
 		var guess = ALL;
 		var text, mtch;
-		for (var i=table.tBodies[0].rows.length; i--; ) {
-			text = sorttable.getInnerText(table.tBodies[0].rows[i].cells[column]);
-			if (text) {
+		var row=table.tBodies[0].rows;
+		var rows=row.length;
+		for (var i=0; i<rows; ++i) {
+			text = sorttable.getInnerText(row[i].cells[column]);
+			row_array[i] = [text,row[i]];
+			if (i < 100) {
 				if (guess&NUMERIC && (mtch = sorttable.RE_NUMERIC.exec(text))) {
 					guess&=~DATE;
 					var decimal_point = null;
@@ -111,7 +114,6 @@ var sorttable = {
 					}
 				} else {
 					guess = 0;
-					break;
 				}
 			}
 		}
@@ -204,6 +206,7 @@ var sorttable = {
 		var row = table.tBodies[0].rows;
 		var rows = row.length;
 		var col = this['stCol'];
+		var row_array;
 		var i;
 
 		sorttable.updateArrow(this,inverse,!sorted);
@@ -213,21 +216,21 @@ var sorttable = {
 			if (mtch && sorttable['sort_'+mtch[1]]) {
 				this['stFunc'] = sorttable['sort_'+mtch[1]];
 			} else {
-				this['stFunc'] = sorttable.guessType(table,col);
+				row_array = new Array(rows);
+				this['stFunc'] = sorttable.guessType(table,col,row_array);
 			}
 		} else if (sorted) {
 			sorttable.reverseSort(table.tBodies[0]);
 			return;
 		}
-
-		// build an array to sort. This is a Schwartzian transform thing,
-		// i.e., we "decorate" each row with the actual sort key,
-		// sort based on the sort keys, and then put the rows back in order
-		// which is a lot faster because you only do getInnerText once per row
-		var row_array = [];
-		for (i=0; i<rows; ++i) {
-			row_array[i] = [sorttable.getInnerText(row[i].cells[col]), row[i]];
+		
+		if (!row_array) { // build an array to sort if we didn't had to guessType()
+			row_array = new Array(rows);
+			for (i=0; i<rows; ++i) {
+				row_array[i] = [sorttable.getInnerText(row[i].cells[col]), row[i]];
+			}
 		}
+
 		/* If you want a stable sort, uncomment the following line */
 		//sorttable.shaker_sort(row_array, this['stFunc']);
 		/* and comment out this one */

@@ -34,7 +34,7 @@ var sorttable = {
 		if (!document.createElement || !document.getElementsByTagName) return;
 
 		var tables = document.getElementsByTagName('table');
-		for (var i=tables.length; i--; ) {
+		for (var i=0,ie=tables.length; i<ie; ++i) {
 			if (tables[i].className.search(/\bsortable\b/) != -1)
 				sorttable.makeSortable(tables[i]);
 		}
@@ -55,7 +55,7 @@ var sorttable = {
 
 		// activate sorttable for columns
 		var headrow = table.tHead.rows[0].cells;
-		for (var i=headrow.length; i--; ) {
+		for (var i=0,ie=headrow.length; i<ie; ++i) {
 			if (!/\bsorttable_nosort\b/.test(headrow[i].className)) { // use this column
 				headrow[i]['stRows'] = -1;
 				headrow[i]['stCol'] = i;

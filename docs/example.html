@@ -5,36 +5,36 @@
 <title>sorttable example</title>
 <script src="../sorttable.js"></script>
 <style>
-/* sorttable styles, these also add the placeholder sort arrow and cursor */
-.sortable{
-	padding:0;
-	border-spacing:0;
-	border:1px solid black;
-	text-align:center;
-}
+/* sorttable styles, these add the placeholder sort arrow and cursor */
 .sortable th:not(.sorttable_nosort){
 	cursor:pointer;
-}
-.sortable tr:hover{
-	background:#eee;
 }
 .sortable th:not(.sorttable_nosort):not(.sorttable_sorted):not(.sorttable_sorted_reverse):after{
 	opacity:0.25;
 	display:inline;
 	content:'\a0\25BE';
 }
-.sortable th{
+/* styles used for these examples */
+table{
+	padding:0;
+	border-spacing:0;
+	border:1px solid black;
+	text-align:center;
+}
+tr:hover{
+	background:#eee;
+}
+th{
 	background:#F0F9FF;
 	padding:0 5px;
 	border-bottom:1px solid #000;
 }
-.sortable th:not(:last-child), td:not(:last-child){
-	border-right:1px dotted gray;
-}
-.sortable tr:not(:last-child) td{
+tr:not(:last-child) td{
 	border-bottom:1px dotted gray;
 }
-/* styles used for examples */
+th:not(:last-child), td:not(:last-child){
+	border-right:1px dotted gray;
+}
 a{color:#184df3}
 a:hover,a:focus{color:#567BF0}
 .ok{color:#019e15;}
@@ -287,6 +287,14 @@ You can use sorttable to make any page's tables sortable, simply bookmark the li
 <!-- tests against original sorttable and sorttable.min -->
 
 <hr/>
+<table id="tstNoBody" style="display:none">
+<thead>
+	<tr><th>This</th><th>table</th><th>got</th><th>no</th><th>body</th></tr>
+</thead>
+</table>
+<table class="sortable" id="tstEmpty" style="display:none">
+	<tr><th>This</th><th>table</th><th>is</th><th>empty</th></tr>
+</table>
 <div style="min-height:200px;">
 These buttons are mostly for testing purposes or comparison to original sorttable<br/>
 <button onclick="tstUnload()">unload sorttable</button>
@@ -294,11 +302,40 @@ These buttons are mostly for testing purposes or comparison to original sorttabl
 <button onclick="tstLoad('sorttable_min','../sorttable.min.js')">load sorttable.min</button>
 <button onclick="tstLoad('sorttable_orig','http://kryogenix.org/code/browser/sorttable/sorttable.js')">load original sorttable</button>
 <br/>
-<button onclick="tstQuickTest()">quick test</button>
+<button onclick="tstQuickTest()">quick test</button> <input id="errDebug" type="checkbox" onchange="window.DEBUG=!this.checked" checked=""/><label for="errDebug">catch errors</label>
 <div id="test"></div>
 </div>
 <!--IE < 11 compatibility fix:--><script id="__ie_onload"></script>
 <script>
+var tests = [
+	// id, cols, col-test
+	['full test (simple example)','example',9,
+		['Bloggs, Fred','Turvey, Kevin'],
+		['$3300','$191200.00'],
+		[],
+		['1353','9005'],
+		['12/11/1961','18/08/2003'],
+		[],
+		[],
+		['-21,000,000','+3,425,422'],
+		[]
+	],
+	['custom duration sort','custom',1,
+		['0 d 15 h 40 m','115 d 08 h 56 m']
+	],
+	['alpha | numeric','cssdemo',4,
+		0,
+		['A','F'],
+		['12','74'],
+		0
+	],
+	['table without body','tstNoBody',5,
+		0,0,0,0,0
+	],
+	['empty table','tstEmpty',4,
+		0,0,0,0
+	]
+];
 var testdiv = document.getElementById('test');
 var $sorttable = window.sorttable;
 var $sorttable_min = undefined;
@@ -396,56 +433,38 @@ function tstLoad(name,url){
 	testdiv.innerHTML = 'successfully loaded '+name;
 }
 function tstQuickTest(){
-	var tests = [
-		// id, cols, col-test
-		['example',9,
-			['Bloggs, Fred','Turvey, Kevin'],
-			['$3300','$191200.00'],
-			[],
-			['1353','9005'],
-			['12/11/1961','18/08/2003'],
-			[],
-			[],
-			['-21,000,000','+3,425,422'],
-			[],
-		],
-		['custom',1,
-			['0 d 15 h 40 m','115 d 08 h 56 m']
-		],
-		['cssdemo',4,
-			0,
-			['A','F'],
-			['12','74'],
-			0,
-		]
-	];
 	testdiv.innerHTML = '';
 	for (var tst=0; tst<tests.length; ++tst){
 		var test = tests[tst];
 		testdiv.innerHTML+='Test #'+(tst+1)+': ';
 		try{
-			var table = document.getElementById(test[0]);
+			var table = document.getElementById(test[1]);
 			var header = table.tHead.rows[0].cells;
-			var lastsort;
+			var lastsort = [];
 			var fails = '';
-			for (var i=0; i<test[1]; ++i){
+			if (!/\bsorttable\b/.test(table.className))
+				sorttable.makeSortable(table);
+			for (var i=0; i<test[2]; ++i){
 				var name = header[i].textContent || header[i].innerText;
 				if(/\bsorttable_nosort\b/.test(header[i].className))
 					continue;
 				if(!/\bsorttable_sorted\b/.test(header[i].className)){
 					sorttable.innerSortFunction.call(header[i]);
 				}
+				if (!table.tBodies.length)
+					continue;
 				var rows = table.tBodies[0].rows;
 				var lastrow = rows.length-1;
 				var thissort = [];
 				for (var row=0; row<rows.length; ++row)
 					thissort[row]=rows[row];
-				if (test[2+i]){
+				var rowtest = test[3+i];
+				if (rowtest){
 					var err = '';
-					if (test[2+i].length==2){
+					if (rowtest.length==2){
 						var data0 = rows[0].cells[i].textContent || rows[0].cells[i].innerText;
 						var data1 = rows[lastrow].cells[i].textContent || rows[lastrow].cells[i].innerText;
-						if (data0 != test[2+i][0] || data1 != test[2+i][1]){
+						if (data0 != rowtest[0] || data1 != rowtest[1]){
 							err = 'wrongly sorted';
 						}
 					}else if (thissort.every){
@@ -459,10 +478,13 @@ function tstQuickTest(){
 				lastsort = thissort;
 			}
 			if (fails) throw(fails);
-			testdiv.innerHTML+='<span class="ok">passed</span><br/>';
+			testdiv.innerHTML+='<span class="ok">passed</span> <small>('+test[0]+')</small><br/>';
 		}catch(e){
-			console.log(e);
-			testdiv.innerHTML+='<span class="err">failed</span>, '+e+'<br/>';
+			testdiv.innerHTML+='<span class="err">failed</span>, '+e+' <small>('+test[0]+')</small><br/>';
+			if (typeof e!=='string'){
+				if (window.DEBUG) throw(e);
+				console.log(e);
+			}
 		}
 	}
 }

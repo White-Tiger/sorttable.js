@@ -200,9 +200,11 @@ var sorttable = {
 
 	/** @this {Element} */
 	innerSortFunction: function(e) {
+		var table = this.parentNode.parentNode.parentNode;
+		if (!table.tBodies.length)
+			return;
 		var sorted = (this.className.indexOf(sorttable.CLASS_SORT[0]) != -1);
 		var inverse = (sorted && this.className.indexOf(sorttable.CLASS_SORT[1])==-1) ? 1 : 0;
-		var table = this.parentNode.parentNode.parentNode;
 		var row = table.tBodies[0].rows;
 		var rows = row.length;
 		var col = this['stCol'];

@@ -53,11 +53,10 @@ var sorttable = {
 
 		if (table.tHead.rows.length != 1) return; // can't cope with two header rows
 
-		// work through each column and calculate its type
+		// activate sorttable for columns
 		var headrow = table.tHead.rows[0].cells;
 		for (var i=headrow.length; i--; ) {
-			// manually override the type with a sorttable_type attribute
-			if (!/\bsorttable_nosort\b/.test(headrow[i].className)) { // skip this col
+			if (!/\bsorttable_nosort\b/.test(headrow[i].className)) { // use this column
 				headrow[i]['stRows'] = -1;
 				headrow[i]['stCol'] = i;
 				dean_addEvent(headrow[i], "click", sorttable.innerSortFunction);
@@ -186,8 +185,7 @@ var sorttable = {
 				preth.removeChild(arrow);
 				// remove sorttable_sorted classes
 				preth.className = preth.className
-					.replace(new RegExp('\\s*\\b'+sorttable.CLASS_SORT[0]+'\\b\\s*'),'')
-					.replace(new RegExp('\\s*\\b'+sorttable.CLASS_SORT[1]+'\\b\\s*'),'');
+					.replace(new RegExp('\\s*\\b(?:'+sorttable.CLASS_SORT[0]+'|'+sorttable.CLASS_SORT[1]+')\\b\\s*'),'');
 			}
 			arrow = document.createElement('span');
 			th.className += ' '+sorttable.CLASS_SORT[inverse];
@@ -209,9 +207,9 @@ var sorttable = {
 		var i;
 
 		sorttable.updateArrow(this,inverse,!sorted);
-		if (rows !== this['stRows']){
+		if (rows !== this['stRows']){ // determine sort function
 			this['stRows'] = rows;
-			var mtch = /\bsorttable_([a-z0-9]+)\b/.exec(this.className);
+			var mtch = /\bsorttable_(\w+)\b/.exec(this.className);
 			if (mtch && sorttable['sort_'+mtch[1]]) {
 				this['stFunc'] = sorttable['sort_'+mtch[1]];
 			} else {

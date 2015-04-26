@@ -21,7 +21,7 @@ var sorttable = {
 	RE_DATE: /^(\d\d?)[\/\.\-](\d\d?)[\/\.\-](\d{4})$/,
 	CLASS_SORT: ['sorttable_sorted','sorttable_sorted_reverse'],
 	CLASS_ARROW: ['sorttable_sortfwdind','sorttable_sortrevind'],
-	ARROWS: /MSIE [5-8]\.\d/.test(navigator.userAgent) ? ['&nbsp<font face="webdings">6</font>','&nbsp<font face="webdings">5</font>'] : ['&nbsp;&#x25BE;','&nbsp;&#x25B4;'],
+	ARROWS: /MSIE [5-8]\.\d/.test(navigator.userAgent) ? ['&nbsp<font face="webdings">5</font>','&nbsp<font face="webdings">6</font>'] : ['&nbsp;&#x25B4;','&nbsp;&#x25BE;'],
 	_isi: false,
 	_timer: null,
 	init: function() {

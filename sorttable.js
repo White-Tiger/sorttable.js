@@ -40,7 +40,20 @@ var sorttable = {
 		}
 	},
 
+	addOnClick: function(info,cells) {
+		for (var i=0,ie=cells.length; i<ie; ++i) {
+			if (/\bsorttable_nosort\b/.test(cells[i].className))
+				continue;
+			if (!info[i])
+				info[i] = {known:-1,func:null,heads:[]};
+			info[i].heads.push(cells[i]);
+			cells[i]['stCol'] = i;
+			dean_addEvent(cells[i], 'click', sorttable.innerSortFunction);
+		}
+	},
 	makeSortable: function(table) {
+		if (table['stInfo'])
+			return;
 		if (!table.getElementsByTagName('thead').length) {
 			// table doesn't have a tHead. Since it should have, create one and
 			// put the first table row in it.
@@ -51,17 +64,22 @@ var sorttable = {
 		// Safari doesn't support table.tHead, sigh
 		if (!table.tHead) table.tHead = table.getElementsByTagName('thead')[0];
 
-		if (table.tHead.rows.length != 1) return; // can't cope with two header rows
-
+		var info = table['stInfo'] = [];
+		info.arrows = [];
 		// activate sorttable for columns
-		var headrow = table.tHead.rows[0].cells;
-		for (var i=0,ie=headrow.length; i<ie; ++i) {
-			if (!/\bsorttable_nosort\b/.test(headrow[i].className)) { // use this column
-				headrow[i]['stRows'] = -1;
-				headrow[i]['stCol'] = i;
-				dean_addEvent(headrow[i], "click", sorttable.innerSortFunction);
+		sorttable.addOnClick(info, table.tHead.rows[0].cells);
+		
+		var body = table.tBodies;
+		for (var i=0,ie=body.length; i<ie; ++i) {
+			var rows = body[i].rows;
+			if (rows.length === 1 && rows[0].cells[0].nodeName === 'TH') {
+				sorttable.addOnClick(info, rows[0].cells);
+			}
 		}
-		}
+		
+		var row = table.tFoot && table.tFoot.rows[0];
+		if (row && row.cells[0].nodeName === 'TH')
+			sorttable.addOnClick(info, row.cells);
 	},
 
 	guessType: function(table, column, row_array) {
@@ -179,23 +197,24 @@ var sorttable = {
 		}
 	},
 
-	updateArrow: function(th,inverse,create) {
-		var arrow = th.parentNode['stArrow'];
+	updateArrows: function(info,col,inverse,create) {
+		for (var i=info[col].heads.length; i--; ) {
+			var arrow = info.arrows[i];
+			var th = info[col].heads[i];
 			if (create){
 				if (arrow){
-				var preth = arrow.parentNode;
-				preth.removeChild(arrow);
-				// remove sorttable_sorted classes
-				preth.className = preth.className
+					var th_old = arrow.parentNode;
+					th_old.className = th_old.className
 						.replace(new RegExp('\\s*\\b(?:'+sorttable.CLASS_SORT[0]+'|'+sorttable.CLASS_SORT[1]+')\\b\\s*'),'');
-			}
+				} else
 					arrow = document.createElement('span');
 				th.className += ' '+sorttable.CLASS_SORT[inverse];
-			th.parentNode['stArrow'] = th.appendChild(arrow);
+				info.arrows[i] = th.appendChild(arrow);
 			} else // toggle class
 				th.className = th.className.replace(new RegExp('\\b'+sorttable.CLASS_SORT[(1+inverse)%2]+'\\b'), sorttable.CLASS_SORT[inverse]);
 			arrow.className = sorttable.CLASS_ARROW[inverse];
 			arrow.innerHTML = sorttable.ARROWS[inverse];
+		}
 	},
 
 	/** @this {Element} */
@@ -208,18 +227,19 @@ var sorttable = {
 		var row = table.tBodies[0].rows;
 		var rows = row.length;
 		var col = this['stCol'];
+		var info = table['stInfo'];
 		var row_array;
 		var i;
 
-		sorttable.updateArrow(this,inverse,!sorted);
-		if (rows !== this['stRows']){ // determine sort function
-			this['stRows'] = rows;
+		sorttable.updateArrows(info,col,inverse,!sorted);
+		if (table.rows.length !== info[col].known){ // determine sort function
+			info[col].known = table.rows.length;
 			var mtch = /\bsorttable_(\w+)\b/.exec(this.className);
 			if (mtch && sorttable['sort_'+mtch[1]]) {
-				this['stFunc'] = sorttable['sort_'+mtch[1]];
+				info[col].func = sorttable['sort_'+mtch[1]];
 			} else {
 				row_array = new Array(rows);
-				this['stFunc'] = sorttable.guessType(table,col,row_array);
+				info[col].func = sorttable.guessType(table,col,row_array);
 			}
 		} else if (sorted) {
 			sorttable.reverseSort(table.tBodies[0]);
@@ -234,9 +254,9 @@ var sorttable = {
 		}
 
 		/* If you want a stable sort, uncomment the following line */
-		//sorttable.shaker_sort(row_array, this['stFunc']);
+		//sorttable.shaker_sort(row_array, info[col].func);
 		/* and comment out this one */
-		row_array.sort(this['stFunc']);
+		row_array.sort(info[col].func);
 		if (inverse) row_array.reverse();
 
 		var tb = table.tBodies[0];

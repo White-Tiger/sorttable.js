@@ -305,13 +305,13 @@ var sorttable = {
 	   each sort function takes two parameters, a and b
 	   you are comparing a[0] and b[0] */
 	sort_numeric: function(a,b) {
-		var aa = parseFloat(a[0].replace(/[^\-\d.]/g,''))<<0;
-		var bb = parseFloat(b[0].replace(/[^\-\d.]/g,''))<<0;
+		var aa = parseFloat(a[0].replace(/[^\-\d.]/g,'')) || 0;
+		var bb = parseFloat(b[0].replace(/[^\-\d.]/g,'')) || 0;
 		return aa - bb;
 	},
 	sort_numeric_comma: function(a,b) {
-		var aa = parseFloat(a[0].replace(/[^\-\d,]/g,'').replace(/,/,'.'))<<0;
-		var bb = parseFloat(b[0].replace(/[^\-\d,]/g,'').replace(/,/,'.'))<<0;
+		var aa = parseFloat(a[0].replace(/[^\-\d,]/g,'').replace(/,/,'.')) || 0;
+		var bb = parseFloat(b[0].replace(/[^\-\d,]/g,'').replace(/,/,'.')) || 0;
 		return aa - bb;
 	},
 	sort_alpha: function(a,b) {

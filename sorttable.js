@@ -35,7 +35,7 @@ var sorttable = {
 
 		var tables = document.getElementsByTagName('table');
 		for (var i=0,ie=tables.length; i<ie; ++i) {
-			if (tables[i].className.search(/\bsortable\b/) != -1)
+			if (tables[i].rows.length && tables[i].className.search(/\bsortable\b/) != -1)
 				sorttable.makeSortable(tables[i]);
 		}
 	},
@@ -60,7 +60,7 @@ var sorttable = {
 				headrow[i]['stRows'] = -1;
 				headrow[i]['stCol'] = i;
 				dean_addEvent(headrow[i], "click", sorttable.innerSortFunction);
-			}
+		}
 		}
 	},
 
@@ -181,21 +181,21 @@ var sorttable = {
 
 	updateArrow: function(th,inverse,create) {
 		var arrow = th.parentNode['stArrow'];
-		if (create){
-			if (arrow){
+			if (create){
+				if (arrow){
 				var preth = arrow.parentNode;
 				preth.removeChild(arrow);
 				// remove sorttable_sorted classes
 				preth.className = preth.className
-					.replace(new RegExp('\\s*\\b(?:'+sorttable.CLASS_SORT[0]+'|'+sorttable.CLASS_SORT[1]+')\\b\\s*'),'');
+						.replace(new RegExp('\\s*\\b(?:'+sorttable.CLASS_SORT[0]+'|'+sorttable.CLASS_SORT[1]+')\\b\\s*'),'');
 			}
-			arrow = document.createElement('span');
-			th.className += ' '+sorttable.CLASS_SORT[inverse];
+					arrow = document.createElement('span');
+				th.className += ' '+sorttable.CLASS_SORT[inverse];
 			th.parentNode['stArrow'] = th.appendChild(arrow);
-		} else // toggle class
-			th.className = th.className.replace(new RegExp('\\b'+sorttable.CLASS_SORT[(1+inverse)%2]+'\\b'), sorttable.CLASS_SORT[inverse]);
-		arrow.className = sorttable.CLASS_ARROW[inverse];
-		arrow.innerHTML = sorttable.ARROWS[inverse];
+			} else // toggle class
+				th.className = th.className.replace(new RegExp('\\b'+sorttable.CLASS_SORT[(1+inverse)%2]+'\\b'), sorttable.CLASS_SORT[inverse]);
+			arrow.className = sorttable.CLASS_ARROW[inverse];
+			arrow.innerHTML = sorttable.ARROWS[inverse];
 	},
 
 	/** @this {Element} */

@@ -21,22 +21,25 @@ table{
 	border:1px solid black;
 	text-align:center;
 }
-tr:hover{
+tbody tr:hover{
 	background:#eee;
 }
 th{
 	background:#F0F9FF;
 	padding:0 5px;
+	border-top:1px solid #000;
 	border-bottom:1px solid #000;
 }
+thead th{border-top:none;}
+tfoot th{border-bottom:none;}
 tr:not(:last-child) td{
 	border-bottom:1px dotted gray;
 }
 th:not(:last-child), td:not(:last-child){
 	border-right:1px dotted gray;
 }
-a{color:#184df3}
-a:hover,a:focus{color:#567BF0}
+a{color:#567BF0}
+a:hover,a:focus{color:#112D87}
 .ok{color:#019e15;}
 .err{color:#e11b31;}
 .works{color:orange;}
@@ -219,7 +222,7 @@ This modified version of sorttable supports (almost) everything the original fro
 	
 	<!-- consistent row count -->
 
-	<style>
+	<style scoped="">
 	.countedtable{counter-reset: countedtable;}
 	.countedtable td:nth-child(1):before{
 		counter-increment:countedtable;
@@ -247,11 +250,11 @@ This modified version of sorttable supports (almost) everything the original fro
 	
 	<!-- alternating row color (every other, every second row) -->
 	
-	<style>
-	.rowcolor tr:nth-child(even){
+	<style scoped="">
+	.rowcolor tbody tr:nth-child(even){
 		background:#9de;
 	}
-	.rowcolor tr:nth-child(odd){
+	.rowcolor tbody tr:nth-child(odd){
 		background:#cfe;
 	}
 	</style>
@@ -272,6 +275,150 @@ This modified version of sorttable supports (almost) everything the original fro
 	</div>
 </div>
 
+<hr/>
+<div class="row w500">
+<div>Table with multiple bodies and headers</div>
+<div>further demonstration with a "paged" table</div>
+</div>
+<div class="row w500">
+	<div>
+	
+	<!-- a table with multiple bodies -->
+	
+	<table id="multibody" class="sortable">
+	<thead>
+		<tr><th>number</th><th>square root</th></tr>
+	</thead>
+	<tbody>
+		<tr><td>0</td><td>0</td></tr>
+		<tr><td>7</td><td>2.6457513110645905905016157536393</td></tr>
+		<tr><td>5</td><td>2.2360679774997896964091736687313</td></tr>
+		<tr><td>2</td><td>1.4142135623730950488016887242097</td></tr>
+		<tr><td>1</td><td>1</td></tr>
+	</tbody>
+	<tbody>
+		<tr><th>number</th><th>square root</th></tr>
+	</tbody>
+	<tbody>
+		<tr><td>4</td><td>2</td></tr>
+		<tr><td>3</td><td>1.7320508075688772935274463415059</td></tr>
+		<tr><td>6</td><td>2.4494897427831780981972840747059</td></tr>
+		<tr><td>8</td><td>2.8284271247461900976033774484194</td></tr>
+		<tr><td>9</td><td>3</td></tr>
+	</tbody>
+	<tfoot>
+		<tr><th>number</th><th>square root</th></tr>
+	</tfoot>
+	</table>
+
+	</div><div>
+	
+	<!-- paged table -->
+	
+	<style scoped="">
+	.paged tfoot{
+		cursor:default;
+		font-size:88%;
+		font-family:monospace;
+		white-space:pre;
+	}
+	.paged a{cursor:pointer;}
+	.paged tfoot td{border-top:1px solid #000;}
+	.paged tbody:not(.active){display:none;}
+	</style>
+	<script>
+	function createPagedTable(){
+		var PAGES = 20;
+		var PERPAGE = 15;
+		var TRIM = 3;
+		function settext(ele, newtext){
+			if (typeof ele.textContent !== 'undefined') ele.textContent = newtext;
+			else ele.innerText = newtext;
+		}
+		function addRow(body,number,sqrt){
+			var ele = document.createElement('tr');
+			var num = ele.appendChild(document.createElement('td'));
+			var num_sqrt = ele.appendChild(document.createElement('td'));
+			settext(num,number);
+			settext(num_sqrt,sqrt);
+			body.appendChild(ele);
+		}
+		function clickPage(){
+			var table = this.parentNode.table;
+			var page = this.textContent || this.innerText;
+			if (page[1] == '<')
+				updatePage(table,table.current<<0);
+			else if (page[1] == '>')
+				updatePage(table,table.current+2);
+			else
+				updatePage(table,page<<0);
+		}
+		function updatePage(table,page){
+			if (table.current != null) table.tBodies[table.current].className = '';
+			table.current = page-1;
+			table.tBodies[table.current].className = 'active';
+			var pagebar = '';
+			if (page != 1){
+				pagebar += '<a> &lt; </a>';
+				if (page > TRIM+1){
+					pagebar += '<a> 1 </a>';
+					if (page > TRIM+3) pagebar += '.. ';
+					else if (page > TRIM+2) pagebar += '<a> 2 </a>';
+				}
+			}
+			for (var i=Math.max(page-TRIM,1); i<page; ++i){
+				pagebar += '<a>'+(i<10?' ':'')+i+' </a>';
+			}
+			pagebar += '<b>'+(page<10?' ':'')+page+'</b> ';
+			for (var i=page,ie=Math.min(i+TRIM,PAGES); i<ie; ++i){
+				pagebar += '<a>'+(i<9?' ':'')+(i+1)+' </a>';
+			}
+			if (page != PAGES){
+				if (page < PAGES-TRIM){
+					if (page < PAGES-TRIM-2) pagebar += '.. ';
+					else if (page < PAGES-TRIM-1) pagebar += '<a>'+(PAGES<11?' ':'')+(PAGES-1)+' </a>';
+					pagebar += '<a>'+(PAGES<10?' ':'')+PAGES+' </a>';
+				}
+				pagebar += '<a> &gt; </a>';
+			}
+			var bar = table.tFoot.rows[0].cells[0];
+			bar.table = table;
+			bar.innerHTML = pagebar;
+			var as = bar.getElementsByTagName('a');
+			for (var i=0; i<as.length; ++i){
+				as[i].onclick = clickPage;
+			}
+		}
+		var table = document.getElementById('paged');
+		if (table.tBodies[0] && table.tBodies[0].rows.length)
+			return;
+		table.tBodies[0].parentNode.removeChild(table.tBodies[0]);
+		var num = 0;
+		for (var page=0; page<PAGES; ++page){
+			var body = document.createElement('tbody');
+			for (var nume=num+(page+1<PAGES?PERPAGE:3); num<nume; ++num){
+				addRow(body,num,Math.sqrt(num));
+			}
+			table.insertBefore(body,table.tFoot);
+		}
+		updatePage(table,1);
+	}
+	</script>
+	<table class="sortable paged" id="paged">
+	<thead>
+		<tr><th>number</th><th style="width:250px;">square root</th></tr>
+	</thead>
+	<tbody>
+	</tbody>
+	<tfoot>
+		<tr><td colspan="2" style="text-align:right;"></td></tr>
+	</tfoot>
+	</table>
+	<button onclick="createPagedTable();this.style.visibility='hidden';">initialize table</button>
+	
+	</div>
+</div>
+
 <!-- FAQ -->
 
 <hr/>
@@ -281,20 +428,36 @@ FAQ <small>(click on one to view anser)</small>
 <div tabindex="0" class="Q">My table is created by Javascript, how to enable sorting on that one?<span>Call `sorttable.makeSortable(TABLE)`</span></div>
 <div tabindex="0" class="Q">Arrows, how to change them?<span>Use CSS or replace the `sorttable.ARROWS` javascript array. <i>HTML is allowed</i></span></div>
 <div tabindex="0" class="Q">Can I set a column to be unsortable?<span>See the "CSS counters" example for more about it, but basically simply add the class `sorttable_nosort` to every column you don't want to be sortable</span></div>
-You can use sorttable to make any page's tables sortable, simply bookmark the link '<a href='javascript:(function(){if(!window.sorttable){var a=document.createElement("SCRIPT");a.async=!0;a.src="https://raw.githubusercontent.com/White-Tiger/sorttable.js/master/sorttable.js";a.onload=function(){sorttable.init();for(var a=document.getElementsByTagName("table"),b=a.length;b--;)sorttable.makeSortable(a[b])};document.getElementsByTagName("head")[0].appendChild(a)}})();'>activate sorttable</a>' or create a Greasemonkey userscript from it.
+<div tabindex="0" class="Q">What sorting types / algorithms currently exist?<span>these:<br/>
+	`sorttable_numeric` - numbers or currency with decimal point (3.1415926535)<br/>
+	`sorttable_numeric_comma` - numbers or currency with decimal comma (3,1415926535)<br/>
+	`sorttable_alpha` - strings or names using very simple sort (we don't have natural sorting yet)<br/>
+	`sorttable_ddmm` - dates in format dd/mm/yyyy<br/>
+	`sorttable_mmdd` - dates in format mm/dd/yyyy<br/></span></div>
+You can use sorttable to make almost any page's tables sortable, simply bookmark the link '<a href='javascript:(function(){if(!window.sorttable){var a=document.createElement("SCRIPT");a.async=!0;a.src="https://raw.githubusercontent.com/White-Tiger/sorttable.js/master/sorttable.js";a.onload=function(){sorttable.init();for(var a=document.getElementsByTagName("table"),b=a.length;b--;)sorttable.makeSortable(a[b])};document.getElementsByTagName("head")[0].appendChild(a)}})();'>activate sorttable</a>' and open it on the page you want to make sortable or create a Greasemonkey userscript from it.
 <h4>...</h4>
 
 <!-- tests against original sorttable and sorttable.min -->
 
 <hr/>
-<table id="tstNoBody" style="display:none">
+<div style="display:none">
+<table id="tstNoBody">
 <thead>
 	<tr><th>This</th><th>table</th><th>got</th><th>no</th><th>body</th></tr>
 </thead>
 </table>
-<table class="sortable" id="tstEmpty" style="display:none">
+<table id="tstNoHead" class="sortable">
 	<tr><th>This</th><th>table</th><th>is</th><th>empty</th></tr>
 </table>
+<table id="tstData" class="sortable">
+	<tr><th>float</tr>
+	<tr><td>0</td></tr>
+	<tr><td>2.6457513110645905905016157536393</td></tr>
+	<tr><td>2.2360679774997896964091736687313</td></tr>
+	<tr><td>1.4142135623730950488016887242097</td></tr>
+	<tr><td>1</td></tr>
+</table>
+</div>
 <div style="min-height:200px;">
 These buttons are mostly for testing purposes or comparison to original sorttable<br/>
 <button onclick="tstUnload()">unload sorttable</button>
@@ -302,14 +465,14 @@ These buttons are mostly for testing purposes or comparison to original sorttabl
 <button onclick="tstLoad('sorttable_min','../sorttable.min.js')">load sorttable.min</button>
 <button onclick="tstLoad('sorttable_orig','http://kryogenix.org/code/browser/sorttable/sorttable.js')">load original sorttable</button>
 <br/>
-<button onclick="tstQuickTest()">quick test</button> <input id="errDebug" type="checkbox" onchange="window.DEBUG=!this.checked" checked=""/><label for="errDebug">catch errors</label>
+<button onclick="tstQuickTest()">quick test</button> <input id="errDebug" type="checkbox" onchange="window.DEBUG=!this.checked" checked=""/><label for="errDebug">catch errors</label><script>document.getElementById('errDebug').onchange();</script>
 <div id="test"></div>
 </div>
 <!--IE < 11 compatibility fix:--><script id="__ie_onload"></script>
 <script>
 var tests = [
 	// id, cols, col-test
-	['full test (simple example)','example',9,
+	['basic test (simple example)','example',9,
 		['Bloggs, Fred','Turvey, Kevin'],
 		['$3300','$191200.00'],
 		[],
@@ -329,11 +492,18 @@ var tests = [
 		['12','74'],
 		0
 	],
+	['multiple bodies','multibody',2,
+		['0','4'],
+		['0','2'] // tests currently only support first body
+	],
 	['table without body','tstNoBody',5,
 		0,0,0,0,0
 	],
-	['empty table','tstEmpty',4,
+	['no table head','tstNoHead',4,
 		0,0,0,0
+	],
+	['data types test','tstData',1,
+		['0','1','1.4142135623730950488016887242097','2.2360679774997896964091736687313','2.6457513110645905905016157536393']
 	]
 ];
 var testdiv = document.getElementById('test');
@@ -384,18 +554,32 @@ function reinit(){
 function tstUnload(){
 	if (window.sorttable) {
 		testdiv.innerHTML = '';
+		var ele;
 		var tables = document.getElementsByTagName('table');
 		for (var tab=tables.length; tab--; ) {
-			if (~tables[tab].className.search(/\bsortable\b/)) {
-				var head = tables[tab].tHead.rows[0];
+			var table = tables[tab];
+			table['stInfo'] = null;
+			//if (~table.className.search(/\bsortable\b/)) {
+			var heads = [];
+			heads.push(table.tHead.rows[0]);
+			for (var tb=0,tbe=table.tBodies.length; tb<tbe; ++tb) {
+				ele = table.tBodies[tb].rows;
+				if (ele.length === 1 && ele[0].cells[0].nodeName === 'TH')
+					heads.push(ele[0]);
+			}
+			ele = table.tFoot && table.tFoot.rows[0];
+			if (ele && ele.cells[0].nodeName === 'TH')
+				heads.push(ele);
+			for (var h in heads){
+				var head = heads[h];
 				var headrow = head.cells;
 				// remove sorted arrow
-				if (head.stArrow) { // ours
-					head.stArrow.parentNode.removeChild(head.stArrow);
-					head.stArrow = undefined;
-				}
+				ele = head.getElementsByClassName('sorttable_sortfwdind');
+				if (ele[0]) ele[0].parentNode.removeChild(ele[0]);
+				ele = head.getElementsByClassName('sorttable_sortrevind');
+				if (ele[0]) ele[0].parentNode.removeChild(ele[0]);
 				// remove sorted arrow (old)
-				var ele = document.getElementById('sorttable_sortfwdind');
+				ele = document.getElementById('sorttable_sortfwdind');
 				if (ele) ele.parentNode.removeChild(ele);
 				ele = document.getElementById('sorttable_sortrevind');
 				if (ele) ele.parentNode.removeChild(ele);
@@ -442,7 +626,7 @@ function tstQuickTest(){
 			var header = table.tHead.rows[0].cells;
 			var lastsort = [];
 			var fails = '';
-			if (!/\bsorttable\b/.test(table.className))
+			if (!/\bsortable\b/.test(table.className))
 				sorttable.makeSortable(table);
 			for (var i=0; i<test[2]; ++i){
 				var name = header[i].textContent || header[i].innerText;
@@ -461,15 +645,18 @@ function tstQuickTest(){
 				var rowtest = test[3+i];
 				if (rowtest){
 					var err = '';
-					if (rowtest.length==2){
+					if (rowtest.length && rowtest.length!==rows.length){
 						var data0 = rows[0].cells[i].textContent || rows[0].cells[i].innerText;
 						var data1 = rows[lastrow].cells[i].textContent || rows[lastrow].cells[i].innerText;
 						if (data0 != rowtest[0] || data1 != rowtest[1]){
 							err = 'wrongly sorted';
 						}
 					}else if (thissort.every){
-						if (!thissort.every(function(val,idx){return val===lastsort[idx]}))
-							err = 'order changed';
+						var comp = function(val,idx){return val===lastsort[idx]};
+						if (rowtest.length)
+							comp = function(val,idx){return val.textContent==rowtest[idx]};
+						if (!thissort.every(comp))
+							err = rowtest.length ? 'wrongly sorted' : 'order changed';
 					}else{
 						err = 'test not supported';
 					}

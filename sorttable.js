@@ -1,10 +1,10 @@
 (function(){'use strict';
-/*jshint bitwise: false*/
+/*jshint -W069, bitwise: false*/
 /*
   SortTable
-  version 2e2 (enhanced)
-  7th April 2007 (20th February 2015)
-  Stuart Langridge, http://www.kryogenix.org/code/browser/sorttable/
+  version 2e3 (enhanced)
+  7th April 2007 (17th April 2015)
+  https://github.com/White-Tiger/sorttable.js
 
   Instructions:
   Download this file

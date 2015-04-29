@@ -82,7 +82,7 @@ var sorttable = {
 			sorttable.addOnClick(info, row.cells);
 	},
 
-	guessType: function(table, column, row_array) {
+	guessType: function(table, column, sortle) {
 		// guess the type of a column based on its first non-blank row
 		var NUMERIC_POINT=1, NUMERIC_COMMA=2, DATE_DDMM=4, DATE_MMDD=8;
 		var NUMERIC = NUMERIC_POINT | NUMERIC_COMMA;
@@ -90,48 +90,54 @@ var sorttable = {
 		var ALL = NUMERIC | DATE;
 		var guess = ALL;
 		var text, mtch;
-		var row=table.tBodies[0].rows;
-		var rows=row.length;
-		for (var i=0; i<rows; ++i) {
-			text = sorttable.getInnerText(row[i].cells[column]);
-			row_array[i] = [text,row[i]];
-			if (i < 100) {
-				if (guess&NUMERIC && (mtch = sorttable.RE_NUMERIC.exec(text))) {
-					guess&=~DATE;
-					var decimal_point = null;
-					if (mtch[4]) {
-						decimal_point = mtch[4];
-					} else if (mtch[1]) {
-						if (mtch[2]) {
-							if (mtch[1] != mtch[2])
-								decimal_point = mtch[2];
-						} else if (mtch[3].length != 3) {
-							decimal_point = mtch[1];
+		for (var tb=0,tbe=table.tBodies.length; tb<tbe; ++tb) {
+			var rows = table.tBodies[tb].rows;
+			if (rows.length === 1 && rows[0].cells[0].nodeName === 'TH'){
+				sortle.len[tb] = 0;
+				continue;
+			}
+			sortle.len[tb] = rows.length;
+			for (var i=0; i<rows.length; ++i) {
+				text = sorttable.getInnerText(rows[i].cells[column]);
+				sortle.val.push([text,rows[i]]);
+				if (i < 100) {
+					if (guess&NUMERIC && (mtch = sorttable.RE_NUMERIC.exec(text))) {
+						guess&=~DATE;
+						var decimal_point = null;
+						if (mtch[4]) {
+							decimal_point = mtch[4];
+						} else if (mtch[1]) {
+							if (mtch[2]) {
+								if (mtch[1] != mtch[2])
+									decimal_point = mtch[2];
+							} else if (mtch[3].length != 3) {
+								decimal_point = mtch[1];
+							}
 						}
-					}
-					if (decimal_point) {
-						if (decimal_point === ',') {
-							guess&=~NUMERIC_POINT;
+						if (decimal_point) {
+							if (decimal_point === ',') {
+								guess&=~NUMERIC_POINT;
+							} else {
+								guess&=~NUMERIC_COMMA;
+							}
+						}
+					} else if (guess&DATE) {
+						guess&=~NUMERIC;
+						// check for a date: dd/mm/yyyy | mm/dd/yyyy
+						// can have / or . or - as separator
+						mtch = sorttable.RE_DATE.exec(text);
+						if (mtch) {
+							if (mtch[1]<<0 > 12) {
+								guess&=~DATE_MMDD;
+							} else if (mtch[2]<<0 > 12) {
+								guess&=~DATE_DDMM;
+							}
 						} else {
-							guess&=~NUMERIC_COMMA;
-						}
-					}
-				} else if (guess&DATE) {
-					guess&=~NUMERIC;
-					// check for a date: dd/mm/yyyy | mm/dd/yyyy
-					// can have / or . or - as separator
-					mtch = sorttable.RE_DATE.exec(text);
-					if (mtch) {
-						if (mtch[1]<<0 > 12) {
-							guess&=~DATE_MMDD;
-						} else if (mtch[2]<<0 > 12) {
-							guess&=~DATE_DDMM;
+							guess&=~DATE;
 						}
 					} else {
-						guess&=~DATE;
+						guess = 0;
 					}
-				} else {
-					guess = 0;
 				}
 			}
 		}
@@ -190,10 +196,24 @@ var sorttable = {
 		return '';
 	},
 
-	reverseSort: function(tbody) {
-		// reverse the rows in a tbody
-		for (var i=tbody.rows.length; i; ) {
-			tbody.appendChild(tbody.rows[--i]);
+	reverseSort: function(table) {
+		// reverse the rows in a table
+		var tb,tb2,rows;
+		var len = [], remain = [];
+		for (tb=0,tb2=table.tBodies.length; tb<tb2; ++tb) {
+			rows = table.tBodies[tb].rows;
+			if (rows.length === 1 && rows[0].cells[0].nodeName === 'TH'){
+				len[tb] = remain[tb] = 0;
+				continue;
+			}
+			len[tb] = remain[tb] = rows.length;
+		}
+		for (tb=len.length,tb2=0; tb--; ) {
+			rows = table.tBodies[tb].rows;
+			for (var i=len[tb]; i; ) {
+				if (remain[tb2]--) table.tBodies[tb2].appendChild(rows[--i]);
+				else ++tb2;
+			}
 		}
 	},
 
@@ -224,12 +244,10 @@ var sorttable = {
 			return;
 		var sorted = (this.className.indexOf(sorttable.CLASS_SORT[0]) != -1);
 		var inverse = (sorted && this.className.indexOf(sorttable.CLASS_SORT[1])==-1) ? 1 : 0;
-		var row = table.tBodies[0].rows;
-		var rows = row.length;
 		var col = this['stCol'];
 		var info = table['stInfo'];
-		var row_array;
-		var i;
+		var sortle = {len:[],val:null};
+		var i,tb,tbe;
 
 		sorttable.updateArrows(info,col,inverse,!sorted);
 		if (table.rows.length !== info[col].known){ // determine sort function
@@ -238,30 +256,41 @@ var sorttable = {
 			if (mtch && sorttable['sort_'+mtch[1]]) {
 				info[col].func = sorttable['sort_'+mtch[1]];
 			} else {
-				row_array = new Array(rows);
-				info[col].func = sorttable.guessType(table,col,row_array);
+				sortle.val = [];
+				info[col].func = sorttable.guessType(table,col,sortle);
 			}
 		} else if (sorted) {
-			sorttable.reverseSort(table.tBodies[0]);
+			sorttable.reverseSort(table);
 			return;
 		}
 		
-		if (!row_array) { // build an array to sort if we didn't had to guessType()
-			row_array = new Array(rows);
-			for (i=0; i<rows; ++i) {
-				row_array[i] = [sorttable.getInnerText(row[i].cells[col]), row[i]];
+		if (!sortle.val) { // build an array to sort if we didn't had to guessType()
+			sortle.val = [];
+			for (tb=0,tbe=table.tBodies.length; tb<tbe; ++tb) {
+				var rows = table.tBodies[tb].rows;
+				if (rows.length === 1 && rows[0].cells[0].nodeName === 'TH'){
+					sortle.len[tb] = 0;
+					continue;
+				}
+				sortle.len[tb] = rows.length;
+				for (i=0; i<rows.length; ++i) {
+					sortle.val.push([sorttable.getInnerText(rows[i].cells[col]), rows[i]]);
+				}
 			}
 		}
 
 		/* If you want a stable sort, uncomment the following line */
-		//sorttable.shaker_sort(row_array, info[col].func);
+		//sorttable.shaker_sort(sortle.val, info[col].func);
 		/* and comment out this one */
-		row_array.sort(info[col].func);
-		if (inverse) row_array.reverse();
+		sortle.val.sort(info[col].func);
+		if (inverse) sortle.val.reverse();
 
-		var tb = table.tBodies[0];
-		for (i=0; i<rows; ++i) {
-			tb.appendChild(row_array[i][1]);
+		var idx = 0;
+		for (tb=0,tbe=table.tBodies.length; tb<tbe; ++tb) {
+			var tbody = table.tBodies[tb];
+			for (i=sortle.len[tb]; i--; ++idx) {
+				tbody.appendChild(sortle.val[idx][1]);
+			}
 		}
 	},
 
